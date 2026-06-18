@@ -15,6 +15,13 @@ class TaskSource(str, Enum):
 
 
 @dataclass(slots=True)
+class SourceDocument:
+    source: TaskSource
+    content: str
+    location: str | None = None
+
+
+@dataclass(slots=True)
 class TaskRecord:
     task_id: str
     title: str
@@ -32,4 +39,3 @@ class RankedTask:
     task: TaskRecord
     score: float
     rationale: str
-
