@@ -5,16 +5,18 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from taskpilot_ai.models import RankedTask, TaskRecord
+from taskpilot_ai.models import RankedTask, SourceDocument, TaskRecord
 
 
 @dataclass(slots=True)
 class AgentMemory:
     last_user_question: str | None = None
     source_checksums: dict[str, str] = field(default_factory=dict)
+    source_locations: dict[str, str] = field(default_factory=dict)
     extracted_task_ids: set[str] = field(default_factory=set)
     ranked_task_ids: list[str] = field(default_factory=list)
     alerts_sent: list[str] = field(default_factory=list)
+    react_scratchpad: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -26,7 +28,7 @@ class ExecutionTrace:
 
 @dataclass(slots=True)
 class WorkflowState:
-    raw_inputs: dict[str, object] = field(default_factory=dict)
+    raw_inputs: dict[str, SourceDocument] = field(default_factory=dict)
     scrubbed_inputs: dict[str, object] = field(default_factory=dict)
     extracted_tasks: list[TaskRecord] = field(default_factory=list)
     deduplicated_tasks: list[TaskRecord] = field(default_factory=list)
