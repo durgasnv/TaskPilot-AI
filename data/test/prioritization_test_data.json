@@ -1,0 +1,167 @@
+{
+  "_meta": {
+    "description": "Expected prioritization outputs for Dev 3 to validate the scoring engine. Reference date for all deadline calculations: 2026-06-19T09:00:00Z (Monday morning, start of workday).",
+    "scoring_formula": "priority_score = (deadline_urgency * 0.40) + (severity_weight * 0.35) + (dependency_impact * 0.15) + (business_impact_multiplier * 0.10)",
+    "severity_weights": {"P1": 1.0, "P2": 0.7, "P3": 0.4, "P4": 0.1},
+    "deadline_urgency_bands": {
+      "overdue_or_within_4h": 1.0,
+      "within_24h": 0.9,
+      "within_48h": 0.75,
+      "within_1_week": 0.5,
+      "beyond_1_week": 0.2
+    },
+    "business_impact_multipliers": {
+      "revenue_loss_active": 1.5,
+      "legal_compliance_breach": 1.4,
+      "vp_or_executive_escalation": 1.3,
+      "customer_churn_risk": 1.2,
+      "internal_only": 1.0
+    }
+  },
+  "expected_top_10_ranking": [
+    {
+      "rank": 1,
+      "task_id": "SN-INC0001011",
+      "title": "GDPR right-to-erasure: user ACC-USER-55391 — legal deadline TODAY",
+      "expected_score_range": [0.92, 1.0],
+      "rationale": "Legal compliance breach with TODAY deadline (17:00 UTC). €20M fine exposure. P1 severity. No dependencies. Highest urgency band (within 24h, compliance deadline TODAY). Business impact multiplier: 1.4 (legal compliance breach).",
+      "deadline_hours_remaining": 8,
+      "severity": "P1"
+    },
+    {
+      "rank": 2,
+      "task_id": "JIRA-1006",
+      "title": "Security: Rotate API keys exposed in commit abc1234",
+      "expected_score_range": [0.90, 0.98],
+      "rationale": "P1 security incident with noon TODAY deadline (3 hours remaining). Active credential exposure. AWS keys still potentially exploitable. Deadline urgency: highest band. No blocking dependencies.",
+      "deadline_hours_remaining": 3,
+      "severity": "P1"
+    },
+    {
+      "rank": 3,
+      "task_id": "JIRA-1001",
+      "title": "Fix file upload timeout — ACME Corp P1 escalation",
+      "expected_score_range": [0.87, 0.95],
+      "rationale": "P1 severity. Deadline 2026-06-20 (tomorrow, ~32h remaining). VP + customer dual escalation. $2M ARR at risk. Blocks JIRA-1012. Business impact multiplier: combined VP escalation (1.3) + customer churn risk (1.2) → apply highest = 1.3.",
+      "deadline_hours_remaining": 32,
+      "severity": "P1",
+      "blocks_count": 1
+    },
+    {
+      "rank": 4,
+      "task_id": "SN-INC0001009",
+      "title": "TLS Certificate for api.taskpilot.io expiring in 4 days",
+      "expected_score_range": [0.82, 0.90],
+      "rationale": "P1 severity. If not fixed by June 21 (48h), all API clients get cert errors on June 23. Total API outage impact. Although 4 days remain technically, the fix window (DNS propagation + Let's Encrypt) requires action by June 21. Urgency: within_48h band.",
+      "deadline_hours_remaining": 96,
+      "effective_action_deadline_hours": 48,
+      "severity": "P1"
+    },
+    {
+      "rank": 5,
+      "task_id": "JIRA-1004",
+      "title": "Implement read replica routing for reporting queries",
+      "expected_score_range": [0.78, 0.88],
+      "rationale": "P2 severity. Deadline today (2026-06-20). Blocks JIRA-1003 (P1 DB exhaustion). Dependency impact weight is elevated because it unblocks a P1. High combined score from deadline proximity + dependency lift.",
+      "deadline_hours_remaining": 32,
+      "severity": "P2",
+      "unblocks": ["JIRA-1003"]
+    },
+    {
+      "rank": 6,
+      "task_id": "EMAIL-EXTRACTED-001",
+      "title": "Send RCA document to VP James by 08:00 today",
+      "expected_score_range": [0.75, 0.85],
+      "rationale": "Extracted from EMAIL-001. Deadline was 08:00 today — now OVERDUE. Overdue VP-directed deliverable. P1-adjacent urgency (VP escalation, tied to ACME JIRA-1001). Overdue band: 1.0 urgency.",
+      "deadline_hours_remaining": -1,
+      "severity": "P2",
+      "note": "This is an extracted task with no Jira counterpart — demonstrates LLM extraction value."
+    },
+    {
+      "rank": 7,
+      "task_id": "SN-INC0001007",
+      "title": "CVE-2026-31240: critical RCE in log4js — patch within 24h",
+      "expected_score_range": [0.73, 0.83],
+      "rationale": "P1 security CVE. SLA deadline 2026-06-19 10:00 (1 hour from reference time). CVSS 9.8. Affects 4 production services. Security policy: 24h mandatory patch window.",
+      "deadline_hours_remaining": 1,
+      "severity": "P1"
+    },
+    {
+      "rank": 8,
+      "task_id": "JIRA-1003",
+      "title": "Database connection pool exhaustion under peak load",
+      "expected_score_range": [0.70, 0.80],
+      "rationale": "P1 severity. Currently blocked on JIRA-1009 (DBA provisioning). Although blocked, the SLA deadline is June 21 and the blocking task (JIRA-1009) is due today. Score adjusted: blocked penalty reduces urgency slightly but P1 severity and proximity keep it high.",
+      "deadline_hours_remaining": 48,
+      "severity": "P1",
+      "status": "blocked",
+      "blocked_by": ["JIRA-1009"]
+    },
+    {
+      "rank": 9,
+      "task_id": "EMAIL-EXTRACTED-002",
+      "title": "Execute GDPR deletion SQL manually for ACC-USER-55391",
+      "expected_score_range": [0.88, 0.96],
+      "rationale": "Same issue as SN-INC0001011 (DUP-011) — deduplicated/merged. If dedup engine works correctly, this should merge with rank #1 and not appear separately. PRESENCE HERE = dedup failure indicator for QA.",
+      "is_dedup_test": true,
+      "expected_dedup_action": "merge_with_SN-INC0001011",
+      "severity": "P1"
+    },
+    {
+      "rank": 10,
+      "task_id": "SN-INC0001008",
+      "title": "Payment webhook delivery failure rate 34% — 127 stuck orders",
+      "expected_score_range": [0.68, 0.78],
+      "rationale": "P2 severity. Revenue impact (orders stuck in pending). Deadline June 20. PR #892 review in progress. Business impact: revenue recognition risk.",
+      "deadline_hours_remaining": 32,
+      "severity": "P2"
+    }
+  ],
+  "scoring_edge_cases": [
+    {
+      "test_id": "EDGE-001",
+      "description": "Blocked P1 vs unblocked P2 — which ranks higher?",
+      "task_a": "JIRA-1003",
+      "task_b": "JIRA-1004",
+      "expected_winner": "JIRA-1004",
+      "reasoning": "JIRA-1004 is P2 but unblocked and its completion directly unblocks the P1. The dependency_impact score for JIRA-1004 is elevated because completing it removes a blocker on a P1 task."
+    },
+    {
+      "test_id": "EDGE-002",
+      "description": "Extracted email task with no Jira ID — should it appear in the ranked list?",
+      "task_a": "EMAIL-EXTRACTED-GDPR-DELETION",
+      "expected_behavior": "Yes — extracted tasks with high urgency must appear in the ranked output. The agent must not exclude tasks simply because they have no Jira ID.",
+      "expected_min_rank": 5
+    },
+    {
+      "test_id": "EDGE-003",
+      "description": "Two tasks with identical scores — tiebreaker",
+      "tiebreaker_priority_order": ["deadline_closest", "severity_highest", "blocking_most_tasks", "alphabetical_task_id"]
+    },
+    {
+      "test_id": "EDGE-004",
+      "description": "P1 task that is RESOLVED should NOT appear in daily plan",
+      "expected_behavior": "Filter out tasks with status=resolved or status=closed before scoring."
+    },
+    {
+      "test_id": "EDGE-005",
+      "description": "Task with no deadline — how to score?",
+      "expected_behavior": "Apply deadline_urgency = 0.2 (beyond_1_week band as default). Task can still rank high if severity and business_impact are elevated."
+    }
+  ],
+  "demo_scenario_validation": {
+    "required_top_3_tasks_for_demo": ["SN-INC0001011_or_JIRA-1006", "JIRA-1001", "JIRA-1004_or_JIRA-1006"],
+    "required_rationale_elements": [
+      "Deadline proximity in human-readable form (e.g. 'due in 3 hours')",
+      "Severity label (P1/P2/P3/P4)",
+      "Business impact statement (not just a number)",
+      "Dependency mention if applicable"
+    ],
+    "mid_demo_injection_test": {
+      "injected_task": "p1_emergency.json",
+      "expected_new_rank": 1,
+      "expected_alert": "New P1 detected: Production payment processing DOWN — $12,000/minute revenue loss. Reprioritizing your task list.",
+      "max_reprioritization_time_seconds": 10
+    }
+  }
+}
