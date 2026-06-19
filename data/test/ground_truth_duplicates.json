@@ -172,7 +172,7 @@
     },
     {
       "pair_id": "DUP-011",
-      "canonical_task": "EMAIL-005-ACTION-1",
+      "canonical_task": "EMAIL-005",
       "duplicate_task": "SN-INC0001011",
       "similarity_type": "email_confirms_incident",
       "confidence": 0.94,
