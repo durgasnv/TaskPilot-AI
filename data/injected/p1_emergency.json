@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "description": "DROP THIS FILE into data/injected/ during the demo to simulate a surprise overnight P1 incident. The event poller (Dev 4) watches this directory and triggers re-prioritization when a new file appears.",
+    "demo_instruction": "Drop this file at the moment the presenter says 'Let's simulate a new P1 arriving mid-day'. The agent should detect it, re-rank the task list, and push a proactive alert within 10 seconds.",
+    "injected_at": "2026-06-19T09:00:00Z"
+  },
+  "incident": {
+    "number": "INC0001016",
+    "short_description": "CRITICAL: Production payment processing DOWN — 100% transaction failure rate",
+    "description": "Payment processing endpoint POST /api/v2/payments is returning HTTP 500 for 100% of requests since 2026-06-19 08:47 UTC. Cause: the payment processor (Stripe) rotated their signing key overnight and our webhook signature validation is using the old key. All payment transactions are being rejected. Revenue impact: approximately $12,000 per minute. Stripe has confirmed the new signing key is available in their dashboard. Engineering must update the STRIPE_WEBHOOK_SECRET environment variable and redeploy the payment service immediately.",
+    "state": "Open",
+    "priority": "1 - Critical",
+    "severity": "P1",
+    "category": "Integration",
+    "subcategory": "Payment Processing",
+    "assigned_to": "dev_alice@company.com",
+    "opened_by": "monitoring@company.com",
+    "opened_at": "2026-06-19T08:47:00Z",
+    "sla_due": "2026-06-19T09:47:00Z",
+    "customer_account": "All paying customers",
+    "business_impact": "$12,000/minute revenue loss. 100% payment failure rate. All customers affected.",
+    "immediate_actions": [
+      "Retrieve new Stripe webhook signing key from Stripe dashboard (Settings > Webhooks)",
+      "Update STRIPE_WEBHOOK_SECRET in AWS Secrets Manager and Kubernetes secret",
+      "Trigger rolling redeploy of payment-service (zero-downtime deploy available)",
+      "Verify payment processing resumes by testing POST /api/v2/payments with test card",
+      "Reconcile any failed payments from the 08:47–09:xx UTC window with Stripe"
+    ],
+    "tags": ["payment", "stripe", "p1", "revenue-impact", "production-down", "demo-injection"]
+  }
+}
