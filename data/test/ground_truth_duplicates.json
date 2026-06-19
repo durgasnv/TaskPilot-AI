@@ -1,0 +1,225 @@
+{
+  "_meta": {
+    "description": "Ground truth duplicate/correlation pairs for deduplication engine validation (Dev 3) and QA metrics (Dev 5). Each pair represents tasks from different sources that refer to the same underlying issue.",
+    "target_accuracy": ">=90% precision and recall",
+    "similarity_threshold": 0.85,
+    "total_pairs": 12
+  },
+  "duplicate_pairs": [
+    {
+      "pair_id": "DUP-001",
+      "canonical_task": "JIRA-1001",
+      "duplicate_task": "SN-INC0001001",
+      "similarity_type": "exact_same_issue",
+      "confidence": 0.97,
+      "shared_signals": [
+        "ACME Corp mentioned in both",
+        "File upload / 504 timeout described in both",
+        "Same SLA deadline (2026-06-20)",
+        "Same assignee (alice.chen)",
+        "VP escalation mentioned in both"
+      ],
+      "merge_strategy": "keep_jira_as_canonical",
+      "expected_merged_title": "Fix file upload timeout on large attachments (>50 MB) — P1 ACME Corp escalation",
+      "expected_fields_from_servicenow": ["customer_contact", "sla_due", "related_incident_number"]
+    },
+    {
+      "pair_id": "DUP-002",
+      "canonical_task": "JIRA-1001",
+      "duplicate_task": "EMAIL-001",
+      "similarity_type": "email_escalation_same_issue",
+      "confidence": 0.95,
+      "shared_signals": [
+        "VP James email explicitly references file upload issue",
+        "ACME Corp named in both",
+        "Friday EOD deadline matches JIRA-1001 deadline",
+        "Post-mortem requirement extracted from email"
+      ],
+      "merge_strategy": "keep_jira_as_canonical",
+      "expected_merged_title": "Fix file upload timeout on large attachments (>50 MB) — P1 ACME Corp escalation",
+      "expected_fields_from_email": ["hidden_action_items", "business_impact_text", "escalation_chain"]
+    },
+    {
+      "pair_id": "DUP-003",
+      "canonical_task": "JIRA-1001",
+      "duplicate_task": "EMAIL-002",
+      "similarity_type": "customer_email_same_issue",
+      "confidence": 0.96,
+      "shared_signals": [
+        "ACME Corp identified in both",
+        "File upload 504 timeout described in both",
+        "Same SLA reference (contract clause 7.3)",
+        "robert.chen@acmecorp.com maps to customer_contact in INC0001001"
+      ],
+      "merge_strategy": "keep_jira_as_canonical",
+      "expected_merged_title": "Fix file upload timeout on large attachments (>50 MB) — P1 ACME Corp escalation",
+      "expected_fields_from_email": ["customer_sla_clause", "customer_phone_scrubbed", "business_impact_dollar"]
+    },
+    {
+      "pair_id": "DUP-004",
+      "canonical_task": "JIRA-1001",
+      "duplicate_task": "MTG-002-ACTION-1",
+      "similarity_type": "meeting_action_same_issue",
+      "confidence": 0.92,
+      "shared_signals": [
+        "P1 incident war room meeting is directly about JIRA-1001",
+        "nginx timeout fix and chunked upload match JIRA-1001 description",
+        "Same assignee (Alice) and same deadline (Friday EOD)"
+      ],
+      "merge_strategy": "extract_additional_action_items_only",
+      "expected_additional_items": [
+        "Write RCA document by 2026-06-18 08:00",
+        "Full post-mortem document ready by 2026-06-26"
+      ]
+    },
+    {
+      "pair_id": "DUP-005",
+      "canonical_task": "JIRA-1006",
+      "duplicate_task": "SN-INC0001003",
+      "similarity_type": "exact_same_issue",
+      "confidence": 0.98,
+      "shared_signals": [
+        "AWS credential exposure in commit abc1234 — identical in both",
+        "Same assigned engineer (alice.chen)",
+        "Same deadline (2026-06-19 noon)",
+        "Same remediation steps listed"
+      ],
+      "merge_strategy": "keep_jira_as_canonical",
+      "expected_merged_title": "Security: Rotate API keys exposed in commit abc1234 — P1 active incident",
+      "expected_fields_from_servicenow": ["iam_user", "cloudtrail_review_status"]
+    },
+    {
+      "pair_id": "DUP-006",
+      "canonical_task": "JIRA-1006",
+      "duplicate_task": "EMAIL-003",
+      "similarity_type": "email_alert_same_issue",
+      "confidence": 0.97,
+      "shared_signals": [
+        "Security alert email directly about commit abc1234",
+        "AWS credentials exposure — same commit hash",
+        "Same deadline and same assignee (Alice)"
+      ],
+      "merge_strategy": "extract_additional_action_items_only",
+      "expected_additional_items": [
+        "Run BFG Repo Cleaner on git history",
+        "Review CloudTrail logs for unauthorized access",
+        "File ServiceNow incident report by 09:00"
+      ]
+    },
+    {
+      "pair_id": "DUP-007",
+      "canonical_task": "JIRA-1002",
+      "duplicate_task": "SN-INC0001004",
+      "similarity_type": "exact_same_issue",
+      "confidence": 0.96,
+      "shared_signals": [
+        "Mobile authentication silent logout — identical issue described",
+        "12% mobile DAU figure appears in both",
+        "Same assignee (carol.davis)",
+        "Same SLA deadline (2026-06-22)"
+      ],
+      "merge_strategy": "keep_jira_as_canonical",
+      "expected_merged_title": "Authentication token refresh fails silently on mobile clients",
+      "expected_fields_from_servicenow": ["support_ticket_count_47", "customer_impact_pct"]
+    },
+    {
+      "pair_id": "DUP-008",
+      "canonical_task": "JIRA-1003",
+      "duplicate_task": "SN-INC0001005",
+      "similarity_type": "exact_same_issue",
+      "confidence": 0.97,
+      "shared_signals": [
+        "Database connection pool exhaustion — same description",
+        "100 connection pool limit mentioned in both",
+        "Same SRE reporter (dan)",
+        "Same PagerDuty alert history referenced"
+      ],
+      "merge_strategy": "keep_jira_as_canonical",
+      "expected_merged_title": "Database connection pool exhaustion under peak load — P1",
+      "expected_fields_from_servicenow": ["failed_request_count_800", "pagerduty_alerts_3"]
+    },
+    {
+      "pair_id": "DUP-009",
+      "canonical_task": "JIRA-1013",
+      "duplicate_task": "SN-INC0001007",
+      "similarity_type": "overlapping_issue_different_scope",
+      "confidence": 0.88,
+      "shared_signals": [
+        "Both about CVE vulnerability remediation",
+        "INC0001007 is specifically log4js CVE-2026-31240",
+        "JIRA-1013 is broader (all 7 HIGH CVEs including log4js)",
+        "Same assignee (george.park)",
+        "log4js appears in JIRA-1013 labels"
+      ],
+      "merge_strategy": "keep_both_link_as_related",
+      "note": "JIRA-1013 is the parent; INC0001007 is a subset incident for the most critical CVE"
+    },
+    {
+      "pair_id": "DUP-010",
+      "canonical_task": "JIRA-1017",
+      "duplicate_task": "SN-INC0001002",
+      "similarity_type": "exact_same_issue",
+      "confidence": 0.96,
+      "shared_signals": [
+        "API latency 480ms vs 200ms SLA — identical metric in both",
+        "GlobalTech contract mentioned in both",
+        "Same assignee (george.park)",
+        "$50K penalty mentioned in INC, contract context in JIRA"
+      ],
+      "merge_strategy": "keep_jira_as_canonical",
+      "expected_merged_title": "Reduce average API response latency from 480ms to under 200ms — GlobalTech SLA",
+      "expected_fields_from_servicenow": ["contract_penalty_50k", "globaltech_cto_contact"]
+    },
+    {
+      "pair_id": "DUP-011",
+      "canonical_task": "EMAIL-005-ACTION-1",
+      "duplicate_task": "SN-INC0001011",
+      "similarity_type": "email_confirms_incident",
+      "confidence": 0.94,
+      "shared_signals": [
+        "GDPR deletion for ACC-USER-55391 — identical in both",
+        "June 19 deadline mentioned in both",
+        "Legal escalation referenced in both",
+        "Same manual deletion required"
+      ],
+      "merge_strategy": "keep_incident_as_canonical",
+      "expected_merged_title": "GDPR right-to-erasure: user ACC-USER-55391 — legal deadline TODAY",
+      "note": "Email-005 action item confirms the incident context. Merge enriches the incident with manager-assigned context."
+    },
+    {
+      "pair_id": "DUP-012",
+      "canonical_task": "JIRA-1022",
+      "duplicate_task": "SN-INC0001008",
+      "similarity_type": "pr_addresses_incident",
+      "confidence": 0.89,
+      "shared_signals": [
+        "PR #892 webhook retry logic is the fix for INC0001008 payment webhook failures",
+        "Same domain (webhook, payments)",
+        "Same assignee (george.park)"
+      ],
+      "merge_strategy": "link_as_related",
+      "note": "JIRA-1022 is the engineering task (PR review); INC0001008 is the business incident. Related but not duplicate."
+    }
+  ],
+  "extracted_only_tasks": {
+    "description": "Tasks that exist ONLY in emails or meeting transcripts — no Jira/ServiceNow counterpart. These must be extracted by the LLM agent.",
+    "items": [
+      {"source": "EMAIL-001", "action": "Send root cause analysis to VP James by 2026-06-19 08:00"},
+      {"source": "EMAIL-001", "action": "Draft post-mortem document by 2026-06-26"},
+      {"source": "EMAIL-005", "action": "Chase DBA Ivan if no update by 16:00 on 2026-06-19"},
+      {"source": "EMAIL-005", "action": "Review Carol task load and redistribute"},
+      {"source": "EMAIL-007", "action": "Document OAuth2 token refresh flow for PartnerCo by 2026-06-23"},
+      {"source": "EMAIL-008", "action": "Send DBA Ivan list of queries for replica routing"},
+      {"source": "EMAIL-017", "action": "Send ECS task definitions for api-gateway, notification-service, auth-service to Dan by noon"},
+      {"source": "EMAIL-018", "action": "Block PR #887 until Eve fixes Elasticsearch regression"},
+      {"source": "EMAIL-020", "action": "Provide GlobalTech written remediation timeline by 2026-06-20"},
+      {"source": "EMAIL-021", "action": "Approve Elasticsearch maintenance window at 2026-06-20 02:00 UTC"},
+      {"source": "MTG-001", "action": "Decide on JIRA-1011 ownership by noon"},
+      {"source": "MTG-003", "action": "Run .gitignore audit across all repositories this week"},
+      {"source": "MTG-003", "action": "Scope pre-commit hook for credential detection"},
+      {"source": "MTG-004", "action": "Send Ivan EXPLAIN ANALYZE outputs for top 10 queries by EOD 2026-06-18"},
+      {"source": "MTG-005", "action": "Collaborate with Eve on REST v1 deprecation notice by 2026-06-27"},
+      {"source": "MTG-005", "action": "Multi-region active-active feasibility document by 2026-08-15"}
+    ]
+  }
+}
