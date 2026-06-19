@@ -1,0 +1,363 @@
+{
+  "mailbox": "dev_alice@company.com",
+  "exported_at": "2026-06-19T08:00:00Z",
+  "emails": [
+    {
+      "id": "EMAIL-001",
+      "subject": "URGENT: ACME Corp file upload completely down — VP escalation",
+      "from": "vp_james@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": ["pm_bob@company.com", "director_eng@company.com"],
+      "received_at": "2026-06-18T22:15:00Z",
+      "body": "Alice,\n\nI need you to treat this as your absolute top priority right now.\n\nACME Corp's VP of Engineering, Robert Chen (robert.chen@acmecorp.com, +1-415-555-0192), called me at 10 PM tonight. Their entire file upload workflow has been down since yesterday evening. This is a $2M ARR account. They are evaluating alternatives as we speak.\n\nFrom Robert's email to me:\n\"Our operations team processes 400+ daily uploads. Since your outage began, we have had to manually transfer files via FTP — a workflow we decommissioned two years ago. This is unacceptable for an enterprise product. If this is not resolved by Friday EOD, we will be invoking the SLA breach clause in our contract.\"\n\nAlice, I need:\n1. Root cause in my inbox by 8 AM tomorrow.\n2. Fix deployed by Friday 5 PM.\n3. A written post-mortem draft by end of next week.\n\nThis is a company priority. Everything else can wait.\n\n— James\nVP of Engineering",
+      "has_attachments": false,
+      "labels": ["urgent", "escalation", "vp", "acme"],
+      "hidden_action_items": [
+        "Send root cause analysis to VP James by 2026-06-19 08:00",
+        "Deploy file upload fix by 2026-06-20 17:00 (Friday EOD)",
+        "Draft post-mortem document by 2026-06-26"
+      ],
+      "related_jira": "JIRA-1001",
+      "related_incident": "INC0001001"
+    },
+    {
+      "id": "EMAIL-002",
+      "subject": "Re: File Upload Timeout — Our Entire Workflow is Blocked",
+      "from": "robert.chen@acmecorp.com",
+      "to": ["support@company.com", "dev_alice@company.com"],
+      "cc": ["ops_lead@acmecorp.com"],
+      "received_at": "2026-06-18T19:30:00Z",
+      "body": "Team,\n\nFollowing up on my earlier call with your VP James (james.wilson@company.com).\n\nTo summarise the business impact clearly:\n- We process 400+ file uploads per business day\n- Every upload is failing with a 504 Gateway Timeout error since 2026-06-17 18:00\n- Our operations team (12 people, phone: +1-415-555-0198) is now doing manual FTP workarounds\n- We are losing approximately $45,000 per day in productivity\n\nThis is a P1 incident for us. We have SLA clause 7.3 in our contract which entitles us to a credit of 15% monthly subscription if uptime falls below 99.9% in any calendar month.\n\nPlease confirm:\n1. Is this a known issue?\n2. What is the root cause?\n3. What is the ETA for resolution?\n\nRegards,\nRobert Chen\nVP of Engineering, ACME Corp\nDirect: +1-415-555-0192",
+      "has_attachments": false,
+      "labels": ["customer-escalation", "upload", "acme", "sla"],
+      "hidden_action_items": [
+        "Confirm to ACME Corp if this is a known issue (JIRA-1001)",
+        "Provide ETA for file upload fix to robert.chen@acmecorp.com"
+      ],
+      "related_jira": "JIRA-1001",
+      "related_incident": "INC0001001"
+    },
+    {
+      "id": "EMAIL-003",
+      "subject": "Security Alert: Exposed credentials in git — IMMEDIATE ACTION REQUIRED",
+      "from": "security_frank@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": ["security_lead@company.com", "cto@company.com"],
+      "received_at": "2026-06-17T23:30:00Z",
+      "body": "Alice,\n\nOur automated secret scanner flagged your branch feature/analytics-export.\n\nCommit abc1234 (pushed at 22:43 UTC today) contains plaintext AWS credentials:\n- AWS_ACCESS_KEY_ID: AKIA[REDACTED]\n- AWS_SECRET_ACCESS_KEY: [REDACTED]\n\nThese belong to the CI/CD service account (IAM user: taskpilot-ci-deploy). The commit is currently in a non-public branch but git history is permanent.\n\nRequired actions — complete ALL of these before you do anything else:\n1. Rotate the AWS keys IMMEDIATELY via IAM console (do not wait until morning)\n2. Run git-filter-repo or BFG Repo Cleaner to purge the commit from history\n3. Force-push the cleaned branch (coordinate with me first)\n4. Review CloudTrail logs for the past 2 hours for unauthorised API calls on this key\n5. File an internal security incident report in ServiceNow by 9 AM tomorrow\n\nI have already notified the CTO. This must be resolved by noon tomorrow.\n\nFrank\nSecurity Team",
+      "has_attachments": false,
+      "labels": ["security", "urgent", "credentials", "incident"],
+      "hidden_action_items": [
+        "Rotate AWS IAM keys immediately for user taskpilot-ci-deploy",
+        "Run BFG Repo Cleaner to purge credentials from git history",
+        "Review CloudTrail logs for unauthorized API calls (past 2 hours)",
+        "File internal security incident report in ServiceNow by 2026-06-19 09:00"
+      ],
+      "related_jira": "JIRA-1006",
+      "related_incident": "INC0001003"
+    },
+    {
+      "id": "EMAIL-004",
+      "subject": "Code Review Request: PR #892 — Webhook Retry Logic",
+      "from": "george.park@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": [],
+      "received_at": "2026-06-18T09:15:00Z",
+      "body": "Hi Alice,\n\nI've submitted PR #892 for the webhook retry logic implementation. It adds exponential backoff with jitter for failed webhook deliveries.\n\nThis is blocking my next task (JIRA-1008 — payment integration tests) because the retry behaviour is a dependency for the test harness.\n\nCould you review by COB today? I know you're swamped with the upload issue but this is a fairly quick review — ~200 lines changed.\n\nPR link: https://github.com/company/taskpilot/pull/892\n\nKey things to check:\n- The backoff formula (I used 2^attempt * 100ms + random jitter)\n- The max retry count (currently 5)\n- The dead letter queue behaviour after max retries\n\nThanks,\nGeorge",
+      "has_attachments": false,
+      "labels": ["code-review", "pr", "webhook", "payment"],
+      "hidden_action_items": [
+        "Review and merge PR #892 by COB 2026-06-19 (blocking George's next task)"
+      ],
+      "related_jira": "JIRA-1022",
+      "related_incident": "INC0001008"
+    },
+    {
+      "id": "EMAIL-005",
+      "subject": "Manager 1:1 follow-ups — action items from yesterday",
+      "from": "manager_sarah@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": [],
+      "received_at": "2026-06-18T10:00:00Z",
+      "body": "Hi Alice,\n\nGreat 1:1 yesterday. Summary of your action items:\n\n1. GDPR deletion ticket (INC0001011): Legal confirmed the 30-day deadline is TODAY (June 19). You must manually execute the data deletion for user ACC-USER-55391 before 5 PM today. Legal's contact is karen.lee@company.com (ext. 4421).\n\n2. Architecture review: I'd like you to circulate your draft RFC for the JWT session migration (JIRA-1021) by next Friday (June 26). The architecture review board meets July 3 and I want them to have a week to pre-read.\n\n3. Team health: Carol has flagged she is feeling overloaded — she has 3 P2s simultaneously (JIRA-1002, 1011, 1015). Please review her task load today and see if anything can be redistributed.\n\n4. The DBA (Ivan) confirmed the read replica provisioning for JIRA-1009 will be done by EOD today. Please chase him if you haven't heard by 4 PM.\n\nLet me know if anything needs clarification.\n— Sarah",
+      "has_attachments": false,
+      "labels": ["manager", "1on1", "action-items"],
+      "hidden_action_items": [
+        "Execute GDPR deletion for user ACC-USER-55391 before 2026-06-19 17:00 (legal deadline TODAY)",
+        "Circulate JWT session migration RFC (JIRA-1021) by 2026-06-26",
+        "Review Carol's task load and redistribute if needed (overloaded: JIRA-1002, 1011, 1015)",
+        "Chase DBA Ivan for read replica confirmation if no update by 16:00 today"
+      ],
+      "related_jira": "JIRA-1021",
+      "related_incident": "INC0001011"
+    },
+    {
+      "id": "EMAIL-006",
+      "subject": "TLS Certificate Expiry Warning — api.taskpilot.io expires in 4 days",
+      "from": "alerts@certbot.internal",
+      "to": ["sre_dan@company.com", "dev_alice@company.com"],
+      "cc": [],
+      "received_at": "2026-06-19T06:00:00Z",
+      "body": "AUTOMATED ALERT — Certificate Expiry Warning\n\nCertificate: api.taskpilot.io\nExpiry Date: 2026-06-23 00:00:00 UTC\nDays Remaining: 4\n\nAuto-renewal status: FAILED\nFailure reason: DNS-01 challenge failed — DNS propagation error on 2026-06-16 following domain migration.\n\nIMPACT: All API consumers will receive TLS handshake errors starting 2026-06-23 00:00 UTC if not renewed.\n\nRequired actions:\n1. Correct DNS configuration for api.taskpilot.io\n2. Re-trigger Let's Encrypt renewal (certbot renew --force-renewal)\n3. Validate renewal success before 2026-06-21\n\nThis is an automated message from the certificate monitoring system.",
+      "has_attachments": false,
+      "labels": ["infra", "tls", "certificate", "automated-alert"],
+      "hidden_action_items": [
+        "Fix DNS configuration for api.taskpilot.io and re-trigger TLS cert renewal before 2026-06-21"
+      ],
+      "related_jira": null,
+      "related_incident": "INC0001009"
+    },
+    {
+      "id": "EMAIL-007",
+      "subject": "RE: API Documentation for OAuth2 — still waiting after 2 weeks",
+      "from": "tech_lead@partnerco.com",
+      "to": ["dev_alice@company.com", "pm_bob@company.com"],
+      "cc": ["vp_sales@company.com"],
+      "received_at": "2026-06-18T14:00:00Z",
+      "body": "Alice, Bob,\n\nWe are two weeks into our integration project and we still do not have complete documentation for your OAuth2 flow.\n\nSpecifically, we are missing:\n1. The token refresh flow — your current docs describe token acquisition but not refresh\n2. Error codes and retry guidance\n3. Rate limit headers documentation (we keep getting 429s without any retry-after guidance)\n\nWe have a board presentation on our integration progress on June 26. If we cannot demonstrate a working integration by then, we will need to report a significant delay to our board.\n\nI have CC'd your VP of Sales (mark.johnson@company.com) on this email as we need executive visibility.\n\nPlease provide the documentation by June 23.\n\nBest,\nAlex Kim\nTech Lead, PartnerCo\nDirect: +1-312-555-0147",
+      "has_attachments": false,
+      "labels": ["partner", "documentation", "oauth2", "escalation"],
+      "hidden_action_items": [
+        "Provide OAuth2 token refresh documentation to PartnerCo by 2026-06-23",
+        "Document rate limit headers and retry guidance for PartnerCo",
+        "Document error codes for OAuth2 endpoints"
+      ],
+      "related_jira": "JIRA-1016",
+      "related_incident": "INC0001013"
+    },
+    {
+      "id": "EMAIL-008",
+      "subject": "Database read replica — update from DBA team",
+      "from": "dba_ivan@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": ["sre_dan@company.com"],
+      "received_at": "2026-06-18T15:30:00Z",
+      "body": "Alice,\n\nUpdate on the read replica provisioning (JIRA-1009):\n\nI have the replica instance running but I hit a snag — the replication lag is sitting at 45 seconds during peak hours, which exceeds the 5-second maximum your team specified. I need to tune the replica configuration.\n\nRevised ETA: tomorrow (June 19) by 6 PM, not today EOD as I originally said.\n\nTwo things I need from you:\n1. Confirm the exact queries you plan to route to the replica — I need to ensure the replica is optimised for those query patterns\n2. Please test your routing logic against my staging replica first (connection string: replica-staging.internal:5432)\n\nI will send the final connection string for production once I have it tuned.\n\nIvan\nDBA Team",
+      "has_attachments": false,
+      "labels": ["database", "dba", "read-replica", "update"],
+      "hidden_action_items": [
+        "Send DBA Ivan the list of queries intended for read replica routing",
+        "Test routing logic against staging replica at replica-staging.internal:5432",
+        "Note: DBA ETA for production replica is now 2026-06-19 18:00 (not today EOD)"
+      ],
+      "related_jira": "JIRA-1009",
+      "related_incident": "INC0001005"
+    },
+    {
+      "id": "EMAIL-009",
+      "subject": "Incident Review: INC0001003 — DB connection pool (scheduled for June 20)",
+      "from": "sre_dan@company.com",
+      "to": ["dev_alice@company.com", "pm_bob@company.com"],
+      "cc": ["manager_sarah@company.com"],
+      "received_at": "2026-06-18T11:00:00Z",
+      "body": "Team,\n\nScheduling the formal incident review for INC0001003 (DB connection pool exhaustion):\n\nDate: Friday, June 20, 2026\nTime: 14:00–15:00 UTC\nLocation: Conference Room B / Zoom link to follow\n\nPlease prepare:\n- Alice: timeline of events and initial diagnosis\n- Dan (me): SRE response log and PagerDuty timeline\n- Bob: customer impact summary\n\nI will send the incident review template by EOD today. Please have your sections completed before the meeting.\n\nDan",
+      "has_attachments": false,
+      "labels": ["incident-review", "meeting", "database"],
+      "hidden_action_items": [
+        "Prepare timeline and diagnosis for INC0001003 incident review (due 2026-06-20 14:00)",
+        "Attend incident review: 2026-06-20 14:00 UTC, Conference Room B"
+      ],
+      "related_jira": "JIRA-1003",
+      "related_incident": "INC0001005"
+    },
+    {
+      "id": "EMAIL-010",
+      "subject": "Carol is overwhelmed — can we redistribute some tasks?",
+      "from": "dev_carol@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": [],
+      "received_at": "2026-06-18T17:45:00Z",
+      "body": "Hey Alice,\n\nI hope this is okay to bring directly to you before going to Sarah.\n\nI currently have:\n- JIRA-1002 (P2 mobile auth — in progress)\n- JIRA-1011 (P2 notification memory leak — just assigned)\n- JIRA-1015 (P3 GraphQL migration — blocked anyway)\n- INC0001004 (P2 ServiceNow incident)\n- INC0001006 (P2 notification OOM)\n- INC0001013 (P3 PartnerCo rate limits)\n\nThat's 6 items, 3 of which are P2. The memory leak and the mobile auth are both needing deep focus work simultaneously.\n\nCould JIRA-1011 or INC0001013 be moved to George or Eve? I really don't want to drop a ball on the mobile auth fix since I'm closest to the root cause.\n\nThanks for understanding,\nCarol",
+      "has_attachments": false,
+      "labels": ["team", "workload", "redistribution"],
+      "hidden_action_items": [
+        "Evaluate redistributing JIRA-1011 or INC0001013 from Carol to George or Eve"
+      ],
+      "related_jira": "JIRA-1002",
+      "related_incident": null
+    },
+    {
+      "id": "EMAIL-011",
+      "subject": "PCI DSS Audit: biometric auth required by June 30 — mandatory",
+      "from": "security_frank@company.com",
+      "to": ["dev_alice@company.com", "dev_carol@company.com"],
+      "cc": ["compliance_lead@company.com"],
+      "received_at": "2026-06-16T09:00:00Z",
+      "body": "Alice, Carol,\n\nFollowing up on the PCI DSS compliance review.\n\nThe audit team has confirmed: biometric re-authentication for payment actions on mobile is a MANDATORY control under PCI DSS v4.0, Section 8.3.2. This is not optional.\n\nDeadline: June 30, 2026. No extension available.\n\nThe implementation (JIRA-1018) is currently blocked on JIRA-1002 (auth token fix). This creates a critical path dependency:\n\nJIRA-1002 must complete → JIRA-1018 can start → June 30 compliance deadline\n\nIf JIRA-1002 is not completed by June 22, JIRA-1018 cannot complete by June 30.\n\nPlease treat JIRA-1002 as a compliance-driven priority, not just a UX issue.\n\nFrank\nSecurity & Compliance",
+      "has_attachments": false,
+      "labels": ["compliance", "pci-dss", "mobile", "biometric", "urgent"],
+      "hidden_action_items": [
+        "Treat JIRA-1002 as compliance-critical (PCI DSS June 30 deadline) — escalate if not on track by June 22"
+      ],
+      "related_jira": "JIRA-1018",
+      "related_incident": null
+    },
+    {
+      "id": "EMAIL-012",
+      "subject": "Log4js CVE-2026-31240 — patch required within 24 hours",
+      "from": "security_frank@company.com",
+      "to": ["dev_alice@company.com", "george.park@company.com"],
+      "cc": ["cto@company.com"],
+      "received_at": "2026-06-18T10:30:00Z",
+      "body": "All,\n\nNVD published CVE-2026-31240 today. CVSS 9.8 — Critical RCE vulnerability in log4js < 2.4.0.\n\nWe are running log4js 2.3.1 across 4 production services:\n- api-gateway\n- notification-service  \n- analytics-service\n- webhook-processor\n\nSecurity policy requires patching Critical CVEs within 24 hours. That means by:\n2026-06-19 10:00 UTC\n\nGeorge: please own this. Steps:\n1. Update log4js to 2.4.1 in all 4 services\n2. Run regression tests\n3. Deploy to production (coordinate with SRE for rolling deploy)\n4. Update Snyk dashboard and close INC0001007\n\nAlice: please review George's PR when submitted — we can't wait for normal review cycles on this.\n\nFrank",
+      "has_attachments": false,
+      "labels": ["security", "cve", "log4js", "urgent", "patch"],
+      "hidden_action_items": [
+        "Review George's log4js patch PR urgently (bypass normal review cycle — security requirement)",
+        "Patch log4js to 2.4.1 in api-gateway, notification-service, analytics-service, webhook-processor by 2026-06-19 10:00"
+      ],
+      "related_jira": "JIRA-1013",
+      "related_incident": "INC0001007"
+    },
+    {
+      "id": "EMAIL-013",
+      "subject": "Standup notes + blockers from yesterday",
+      "from": "pm_bob@company.com",
+      "to": ["dev_alice@company.com", "dev_carol@company.com", "dev_george@company.com", "dev_eve@company.com", "dev_julia@company.com"],
+      "cc": [],
+      "received_at": "2026-06-18T09:30:00Z",
+      "body": "Team,\n\nSummary from yesterday's standup for the record:\n\nBLOCKERS:\n- Julia: JIRA-1012 (upload progress bar) blocked on Alice completing JIRA-1001 backend fix\n- Julia: JIRA-1014 (analytics dashboard) blocked on Eve completing JIRA-1005 GraphQL migration\n- Carol: JIRA-1018 (biometric auth) blocked on JIRA-1002 completion\n\nIN PROGRESS:\n- Alice: JIRA-1001 upload fix (P1, deadline Friday), JIRA-1006 security rotation (P1, deadline noon tomorrow)\n- George: JIRA-1008 payment tests, JIRA-1017 latency reduction, reviewing PR #892\n- Eve: JIRA-1005 GraphQL migration (on track)\n\nRISKS FLAGGED:\n- Bob: analytics demo for stakeholders is June 26 — Julia's JIRA-1014 is blocked\n- Dan: staging environment (INC0001014) still down, blocking QA validation\n\nAction items for the team:\n- Alice: please update JIRA-1001 status by noon today\n- George: PR #892 needs to be in review TODAY so Alice can review tomorrow\n- Bob: will reach out to stakeholders about possible delay on analytics demo\n\nBob\nProject Manager",
+      "has_attachments": false,
+      "labels": ["standup", "blockers", "team"],
+      "hidden_action_items": [
+        "Update JIRA-1001 status by noon 2026-06-19 (PM Bob's request)"
+      ],
+      "related_jira": "JIRA-1001",
+      "related_incident": null
+    },
+    {
+      "id": "EMAIL-014",
+      "subject": "GDPR Right to Erasure Request — legal deadline TODAY",
+      "from": "legal_lead@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": ["dpo@company.com", "manager_sarah@company.com"],
+      "received_at": "2026-06-19T07:15:00Z",
+      "body": "Alice,\n\nThis is a formal notice.\n\nGDPR right-to-erasure request for user ACC-USER-55391 was filed on 2026-05-20. The 30-day deadline is today, 2026-06-19.\n\nOur automated deletion job failed on 2026-06-05 due to a missing foreign key cascade on the user_sessions table. The user's data was NOT deleted as scheduled.\n\nYou must manually:\n1. Delete all rows in user_sessions where user_id = 'ACC-USER-55391'\n2. Delete the user record from the users table\n3. Delete associated data from user_preferences, user_audit_logs, and user_integrations\n4. Confirm deletion to Karen Lee (karen.lee@company.com, ext. 4421) today\n5. Fix the foreign key cascade to prevent recurrence (separate JIRA ticket needed)\n\nFailure to complete this today exposes the company to GDPR enforcement action. Maximum penalty: €20M or 4% of global annual turnover.\n\nKaren and I are available for questions.\n\n— Legal Team",
+      "has_attachments": false,
+      "labels": ["gdpr", "legal", "compliance", "urgent"],
+      "hidden_action_items": [
+        "Execute manual GDPR deletion for ACC-USER-55391 (user_sessions, users, user_preferences, user_audit_logs, user_integrations) by 2026-06-19 17:00",
+        "Confirm deletion to karen.lee@company.com after execution",
+        "Create Jira ticket to fix user_sessions foreign key cascade for GDPR automation"
+      ],
+      "related_jira": null,
+      "related_incident": "INC0001011"
+    },
+    {
+      "id": "EMAIL-015",
+      "subject": "VendorX: Data export producing wrong results — executive complaint",
+      "from": "ops@vendorx.com",
+      "to": ["dev_alice@company.com", "support@company.com"],
+      "cc": ["ceo@vendorx.com"],
+      "received_at": "2026-06-18T16:00:00Z",
+      "body": "Alice / Support team,\n\nI am writing on behalf of VendorX operations.\n\nWe ran our quarterly data reconciliation exercise yesterday using your export feature. The CSV exported contained 8,432 rows instead of the expected 19,847. The truncated file caused our reconciliation model to produce incorrect results which were presented in our executive quarterly review this morning before we discovered the discrepancy.\n\nThis has caused significant embarrassment and we are questioning the reliability of your platform for enterprise data workflows.\n\nWe require:\n1. Acknowledgement of the bug within 4 hours\n2. A corrected export for our data by 2026-06-20 17:00\n3. Root cause and fix timeline by 2026-06-23\n4. Confirmation of data integrity guarantees going forward\n\nOur CEO (ceo@vendorx.com) has been copied on this email.\n\nMarcus Webb\nDirector of Operations, VendorX",
+      "has_attachments": false,
+      "labels": ["customer-escalation", "data-export", "vendorx", "enterprise"],
+      "hidden_action_items": [
+        "Acknowledge VendorX data export bug within 4 hours of receiving email",
+        "Provide corrected data export to VendorX by 2026-06-20 17:00",
+        "Provide root cause and fix timeline to VendorX by 2026-06-23"
+      ],
+      "related_jira": null,
+      "related_incident": "INC0001015"
+    },
+    {
+      "id": "EMAIL-016",
+      "subject": "Reminder: Architecture Review Board submission — June 26 deadline",
+      "from": "arch_review@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": [],
+      "received_at": "2026-06-18T08:00:00Z",
+      "body": "Hi Alice,\n\nReminder: The Architecture Review Board (ARB) meets on July 3. Submissions are due by June 26 to allow the board one week for pre-reading.\n\nYou have a pending RFC submission: \"Stateless JWT Session Migration\" (JIRA-1021).\n\nPlease ensure your RFC document covers:\n- Current state architecture and pain points\n- Proposed JWT approach (signing algorithm, token lifetime, refresh strategy)\n- Migration strategy (incremental vs. big-bang)\n- Security considerations (token revocation, replay attack mitigation)\n- Rollback plan\n\nIf you cannot submit by June 26, please notify this mailbox to reschedule to the August ARB session.\n\n— Architecture Review Board",
+      "has_attachments": false,
+      "labels": ["architecture", "rfc", "reminder"],
+      "hidden_action_items": [
+        "Submit JWT Session Migration RFC to Architecture Review Board by 2026-06-26"
+      ],
+      "related_jira": "JIRA-1021",
+      "related_incident": null
+    },
+    {
+      "id": "EMAIL-017",
+      "subject": "Staging environment — Terraform state recovery update",
+      "from": "sre_dan@company.com",
+      "to": ["dev_alice@company.com", "qa_hannah@company.com"],
+      "cc": [],
+      "received_at": "2026-06-19T07:00:00Z",
+      "body": "Alice, Hannah,\n\nUpdate on the staging outage (INC0001014):\n\nI've recovered 80% of the Terraform state from remote state backups. The remaining issue is the ECS task definition and the ALB listener rules, which were not captured in the last successful backup.\n\nI need Alice to provide the last known ECS task definition for the following services from the git history:\n- api-gateway\n- notification-service\n- auth-service\n\nPlease find the Dockerfile and task-definition.json for these and send to me by noon today. I expect to have staging back up by 6 PM today.\n\nHannah: I'll give you a 2-hour heads-up before staging is back so your team can queue the test runs.\n\nDan",
+      "has_attachments": false,
+      "labels": ["staging", "infra", "terraform"],
+      "hidden_action_items": [
+        "Send Dan the ECS task definitions for api-gateway, notification-service, auth-service from git history by 2026-06-19 noon"
+      ],
+      "related_jira": null,
+      "related_incident": "INC0001014"
+    },
+    {
+      "id": "EMAIL-018",
+      "subject": "Performance regression in PR #887 — please do not merge",
+      "from": "dev_george@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": [],
+      "received_at": "2026-06-18T16:30:00Z",
+      "body": "Alice,\n\nQuick heads up — I was running perf benchmarks and noticed PR #887 (search index refactor by Eve) introduces a regression:\n\nBefore: p50 search latency = 45ms\nAfter:  p50 search latency = 210ms\n\nThe regression appears in the Elasticsearch query builder — the new code is doing sequential queries where the old code used multi-search.\n\nI've left a comment on the PR but wanted to flag it to you directly since you're the merge authority.\n\nPlease don't merge #887 until Eve can address the regression. I've added a failing perf test to the PR.\n\nGeorge",
+      "has_attachments": false,
+      "labels": ["performance", "regression", "pr", "code-review"],
+      "hidden_action_items": [
+        "Block PR #887 merge until Eve fixes Elasticsearch latency regression (210ms vs 45ms baseline)"
+      ],
+      "related_jira": "JIRA-1017",
+      "related_incident": null
+    },
+    {
+      "id": "EMAIL-019",
+      "subject": "Weekly 1:1 prep — topics for tomorrow",
+      "from": "manager_sarah@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": [],
+      "received_at": "2026-06-18T17:00:00Z",
+      "body": "Hi Alice,\n\nQuick note ahead of our 1:1 tomorrow (June 20, 10 AM):\n\nTopics I want to cover:\n1. JIRA-1001 upload fix — status update\n2. Carol's workload redistribution\n3. Your career growth goals — you mentioned wanting to move into a staff engineer role. I'd like to talk about a concrete plan.\n4. The Q3 technical roadmap — I need your input by June 27 for the board presentation.\n\nFor item 4: please think about your top 3 technical priorities for Q3 and be ready to discuss tradeoffs.\n\nSee you tomorrow!\n— Sarah",
+      "has_attachments": false,
+      "labels": ["manager", "1on1", "career"],
+      "hidden_action_items": [
+        "Prepare Q3 technical roadmap top-3 priorities input for manager by 2026-06-27"
+      ],
+      "related_jira": null,
+      "related_incident": null
+    },
+    {
+      "id": "EMAIL-020",
+      "subject": "GlobalTech: API SLA breach notice — contract penalty clause activation",
+      "from": "csm_lead@company.com",
+      "to": ["dev_alice@company.com", "pm_bob@company.com"],
+      "cc": ["vp_james@company.com"],
+      "received_at": "2026-06-18T13:00:00Z",
+      "body": "Alice, Bob,\n\nI've just come off a call with GlobalTech's account team. They've formally activated the contract penalty clause for API latency SLA breach.\n\nDetails:\n- Contracted SLA: API P99 latency < 200ms\n- Measured P99 (72h average): 480ms\n- Breach threshold crossed: 2026-06-17 00:00 UTC\n- Penalty: $50,000 if not remediated by 2026-06-22 17:00 UTC\n\nGlobalTech's CTO (cto@globaltech.com) has requested a call with our VP of Engineering to discuss remediation timeline.\n\nAction items:\n1. Alice: Confirm with George on JIRA-1017 ETA — does he have enough runway to hit sub-200ms by June 22?\n2. Bob: Set up the call between VP James and GlobalTech CTO for June 20 or 21\n3. Alice: Provide GlobalTech with a written remediation timeline by June 20\n\nThis is a $50K exposure. Please treat accordingly.\n\n— Customer Success",
+      "has_attachments": false,
+      "labels": ["customer-escalation", "globaltech", "sla", "contract-penalty"],
+      "hidden_action_items": [
+        "Confirm JIRA-1017 ETA with George — will latency be < 200ms by 2026-06-22?",
+        "Provide GlobalTech written remediation timeline by 2026-06-20"
+      ],
+      "related_jira": "JIRA-1017",
+      "related_incident": "INC0001002"
+    },
+    {
+      "id": "EMAIL-021",
+      "subject": "New P1: Elasticsearch index corruption affecting all search results",
+      "from": "sre_dan@company.com",
+      "to": ["dev_alice@company.com"],
+      "cc": ["pm_bob@company.com"],
+      "received_at": "2026-06-18T22:00:00Z",
+      "body": "Alice,\n\nLate night alert — Elasticsearch primary index has partial corruption post the June 17 cluster failover.\n\nSymptomatic behaviour:\n- Search returning deleted tasks\n- Recent tasks (created after June 17) not appearing in results\n- Full-text search returning stale content\n\nI've raised INC0001010. We need a re-index but that requires a 45-minute scheduled maintenance window (all search features unavailable).\n\nCan we schedule for 02:00 UTC on June 20 (Saturday night)? I need your sign-off as tech lead.\n\nIf you agree:\n1. Approve the maintenance window (reply to this email)\n2. Notify PM Bob to update the status page\n3. I'll execute the re-index during the window\n\nDan",
+      "has_attachments": false,
+      "labels": ["infra", "elasticsearch", "maintenance", "search"],
+      "hidden_action_items": [
+        "Approve maintenance window for Elasticsearch re-index at 2026-06-20 02:00 UTC (reply to Dan)",
+        "Notify PM Bob to update status page for 45-min search maintenance window"
+      ],
+      "related_jira": null,
+      "related_incident": "INC0001010"
+    }
+  ]
+}
