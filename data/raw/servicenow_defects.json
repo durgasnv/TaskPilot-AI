@@ -1,0 +1,31 @@
+{
+  "instance": "company.service-now.com",
+  "incidents": [
+    {
+      "number": "SN-5501",
+      "short_description": "Production DB connection pool exhausted",
+      "description": "All 50 connections in the PostgreSQL pool are held by stalled queries triggered by the overnight batch job. New requests are queuing and failing with 'connection timeout'. SLA breach expected in 4 hours if not resolved.",
+      "priority": "1 - Critical",
+      "state": "In Progress",
+      "assigned_to": "engineer@company.com",
+      "opened_at": "2026-06-19T04:30:00Z",
+      "sla_due": "2026-06-20T04:30:00Z",
+      "category": "Database",
+      "subcategory": "Performance",
+      "business_impact": "High — affects all authenticated API requests"
+    },
+    {
+      "number": "SN-5489",
+      "short_description": "SSL certificate expiring in 7 days on api.company.com",
+      "description": "Auto-renewal failed due to a DNS misconfiguration introduced during last week's infrastructure migration. Manual renewal required.",
+      "priority": "2 - High",
+      "state": "New",
+      "assigned_to": "engineer@company.com",
+      "opened_at": "2026-06-18T09:00:00Z",
+      "sla_due": "2026-06-25T09:00:00Z",
+      "category": "Network",
+      "subcategory": "SSL/TLS",
+      "business_impact": "Medium — will cause browser warnings if not renewed"
+    }
+  ]
+}

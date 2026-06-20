@@ -1,0 +1,25 @@
+Sprint Review Meeting — Platform Engineering
+Date: Wednesday, 18 June 2026
+Attendees: Tech Lead, Engineer (you), QA Lead, Product Manager
+
+--- TRANSCRIPT ---
+
+Tech Lead: Let's go through yesterday's incidents first. The ingestion pipeline dropped three files silently overnight and no alert fired. We only found out because the morning report was missing data.
+
+QA Lead: That's the third time this month. The root cause is that we have no retry logic — if a file read fails, it just logs and moves on.
+
+Tech Lead: Agreed. ACTION ITEM: Add retry logic with at least two attempts and exponential backoff to the file ingestion pipeline. Owner: engineer. Due by end of next sprint (June 26).
+
+Product Manager: On the dashboard side — the upload latency spike is also showing up in our product telemetry. It's been climbing since the June 14 deployment. We need someone to profile the upload service.
+
+Engineer: I'll take that. I can do a flame graph run this afternoon.
+
+Tech Lead: Good. ACTION ITEM: Profile upload service and identify the regression introduced in the June 14 deployment. Owner: engineer. Due by Friday June 20.
+
+Product Manager: Last item — we committed to adding CSV export to the task list view for enterprise customers. Is that still on track?
+
+Engineer: It was deprioritized last sprint due to the SN-5501 incident. I can pick it back up once the DB issue is resolved.
+
+Tech Lead: OK, add it back to the backlog. No hard deadline but aim for next sprint.
+
+--- END OF TRANSCRIPT ---
