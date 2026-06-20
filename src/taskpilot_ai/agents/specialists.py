@@ -90,7 +90,11 @@ class IngestionAgent(Agent):
                 continue
 
             source = FileSource(source_config.name)
-            result = self.reader.read(source=source, location=source_config.path)
+            result = self.reader.read(
+                source=source,
+                location=source_config.path,
+                retries=source_config.retries,
+            )
             if result.document:
                 state.raw_inputs[source.value] = result.document
                 state.memory.source_locations[source.value] = result.document.location or "inline"

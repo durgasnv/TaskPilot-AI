@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,26 +30,50 @@ class NormalizerResult:
 
 class SourceReader(ABC):
     @abstractmethod
-    def read(self, source: FileSource, location: str | None) -> ReadResult:
+    def read(
+        self,
+        source: FileSource,
+        location: str | None,
+        retries: int = 2,
+        retry_delay: float = 0.5,
+    ) -> ReadResult:
         """Read a source payload from its configured location."""
 
 
 class FileSystemSourceReader(SourceReader):
-    def read(self, source: FileSource, location: str | None) -> ReadResult:
+    def read(
+        self,
+        source: FileSource,
+        location: str | None,
+        retries: int = 2,
+        retry_delay: float = 0.5,
+    ) -> ReadResult:
         if not location:
             return ReadResult(document=None, error="No path configured.")
 
         path = Path(location)
-        if not path.exists():
-            return ReadResult(document=None, error=f"Missing source file: {location}")
+        last_error: str = ""
 
-        return ReadResult(
-            document=SourceDocument(
-                source=source,
-                content=path.read_text(encoding="utf-8"),
-                location=str(path),
-            )
-        )
+        for attempt in range(max(1, retries)):
+            try:
+                if not path.exists():
+                    last_error = f"Missing source file: {location}"
+                    if attempt < retries - 1:
+                        time.sleep(retry_delay)
+                    continue
+                return ReadResult(
+                    document=SourceDocument(
+                        source=source,
+                        content=path.read_text(encoding="utf-8"),
+                        location=str(path),
+                    )
+                )
+            except OSError as exc:
+                last_error = f"I/O error reading {location}: {exc}"
+                if attempt < retries - 1:
+                    time.sleep(retry_delay)
+
+        return ReadResult(document=None, error=last_error)
 
 
 class NormalizerSourceReader:
