@@ -241,18 +241,19 @@ check("prioritization test: has demo_scenario_validation", "demo_scenario_valida
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
-print("\n" + "=" * 60)
-passed = sum(1 for r in results if r[0] == PASS)
-failed = sum(1 for r in results if r[0] == FAIL)
-print(f"TOTAL: {passed} passed, {failed} failed out of {len(results)} checks")
-print("=" * 60)
+if __name__ == "__main__":
+    print("\n" + "=" * 60)
+    passed = sum(1 for r in results if r[0] == PASS)
+    failed = sum(1 for r in results if r[0] == FAIL)
+    print(f"TOTAL: {passed} passed, {failed} failed out of {len(results)} checks")
+    print("=" * 60)
 
-if failed > 0:
-    print("\nFAILED CHECKS:")
-    for status, name, detail in results:
-        if status == FAIL:
-            print(f"  X {name}" + (f" - {detail}" if detail else ""))
-    sys.exit(1)
-else:
-    print("\nAll checks passed. Dev 1 pipeline is ready.")
-    sys.exit(0)
+    if failed > 0:
+        print("\nFAILED CHECKS:")
+        for status, name, detail in results:
+            if status == FAIL:
+                print(f"  X {name}" + (f" - {detail}" if detail else ""))
+        sys.exit(1)
+    else:
+        print("\nAll checks passed. Dev 1 pipeline is ready.")
+        sys.exit(0)
