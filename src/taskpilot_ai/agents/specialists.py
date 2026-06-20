@@ -58,7 +58,6 @@ def _parse_unified_tasks(llm_output: str, source: FileSource) -> list[UnifiedTas
 
 
 class AgentMode(str, Enum):
-    PASSIVE = "passive"
     REACT = "react"
 
 
