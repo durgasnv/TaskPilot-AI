@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Callable
 
 from taskpilot_ai.interfaces.protocols import NotifierProtocol
+from taskpilot_ai.models import FileSource, SourceDocument, detect_source
 from taskpilot_ai.orchestration.state import WorkflowState
 
 
@@ -60,7 +61,12 @@ class FileDropMonitor:
         return new_files
 
     def _handle_new_file(self, path: Path) -> WorkflowState | None:
-        """Fire alert and re-run the orchestration graph in emergency mode."""
+        """Fire alert and re-run the orchestration graph in emergency mode.
+
+        The dropped file's content is read, detected by source type, and
+        pre-loaded into WorkflowState.raw_inputs so ExtractionAgent processes
+        it alongside the normal sources. Works with any UTF-8 file format.
+        """
         alert = (
             f"New file detected: '{path.name}'. "
             "Triggering emergency re-prioritization."
@@ -71,8 +77,21 @@ class FileDropMonitor:
             return None
 
         state = WorkflowState(emergency_mode=True)
-        result = self.graph_runner(state)
-        return result
+
+        try:
+            content = path.read_text(encoding="utf-8")
+            # Always label dropped files as INJECTED so the LLM extracts from
+            # the actual content rather than returning a hardcoded mock response.
+            state.raw_inputs[FileSource.INJECTED.value] = SourceDocument(
+                source=FileSource.INJECTED,
+                content=content,
+                location=str(path),
+            )
+        except (OSError, UnicodeDecodeError):
+            # Unreadable file still triggers the re-run; content just won't be extracted.
+            pass
+
+        return self.graph_runner(state)
 
     def start(
         self,

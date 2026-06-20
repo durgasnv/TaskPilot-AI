@@ -23,6 +23,7 @@ _SOURCE_MAP: dict[str, TaskSource] = {
     FileSource.SERVICENOW.value: TaskSource.SERVICENOW,
     FileSource.OUTLOOK.value: TaskSource.EMAIL,
     FileSource.MEETING_NOTES.value: TaskSource.TRANSCRIPT,
+    FileSource.INJECTED.value: TaskSource.SERVICENOW,  # runtime drops default to incident-type
 }
 
 
