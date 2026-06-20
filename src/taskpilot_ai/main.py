@@ -33,8 +33,20 @@ def _build_graph() -> TaskPilotGraph:
     ])
 
 
+def _parse_args() -> dict:
+    args = sys.argv[1:]
+    return {
+        "chat": "--chat" in args,
+        "monitor": "--monitor" in args,
+        "slack_webhook": next(
+            (args[i + 1] for i, a in enumerate(args) if a == "--slack-webhook" and i + 1 < len(args)),
+            None,
+        ),
+    }
+
+
 def main() -> None:
-    chat_mode = "--chat" in sys.argv
+    opts = _parse_args()
 
     print("TaskPilot AI — generating your daily plan...\n")
 
@@ -70,16 +82,36 @@ def main() -> None:
             print(f"    Score: {t.priority_score} | {t.priority_rationale}")
         print()
 
-    if chat_mode:
+    if opts["chat"]:
         from taskpilot_ai.chat import run_chat
         run_chat(state)
+    elif opts["monitor"]:
+        _start_monitor(graph, opts["slack_webhook"])
     else:
-        print("Tip: run with --chat to ask questions about your tasks.")
+        print("Tip: run with --chat to ask questions, --monitor to watch for P1 injections.")
         print()
 
-    print(f"Execution traces ({len(state.traces)}):")
-    for trace in state.traces:
-        print(f"  [{trace.step}] {trace.detail}")
+    if not opts["monitor"]:
+        print(f"Execution traces ({len(state.traces)}):")
+        for trace in state.traces:
+            print(f"  [{trace.step}] {trace.detail}")
+
+
+def _start_monitor(graph: "TaskPilotGraph", slack_webhook: str | None) -> None:
+    from taskpilot_ai.events.monitor import FileDropMonitor
+    from taskpilot_ai.interfaces.notifiers import build_notifier
+
+    notifier = build_notifier(slack_webhook)
+    monitor = FileDropMonitor(notifier=notifier)
+
+    print("── P1 Monitor active ───────────────────────────")
+    print("  Watching data/injected/ for new files (Ctrl+C to stop).\n")
+
+    try:
+        monitor.start(graph_runner=graph.run)
+    except KeyboardInterrupt:
+        monitor.stop()
+        print("\nMonitor stopped.")
 
 
 if __name__ == "__main__":
