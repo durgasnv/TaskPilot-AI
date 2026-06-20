@@ -13,6 +13,25 @@ from taskpilot_ai.orchestration.state import WorkflowState
 from taskpilot_ai.unified_task import UnifiedTask
 
 
+# Maps common demo phrases to canonical task_ids for reliable lookup.
+_DEMO_ALIASES: dict[str, str] = {
+    "upload bug": "JIRA-1001",
+    "file upload": "JIRA-1001",
+    "acme issue": "JIRA-1001",
+    "vp email": "EMAIL-001",
+    "james email": "EMAIL-001",
+    "vp's email": "EMAIL-001",
+    "james's email": "EMAIL-001",
+    "security incident": "JIRA-1006",
+    "key rotation": "JIRA-1006",
+    "rotate keys": "JIRA-1006",
+    "gdpr deletion": "SN-INC0001011",
+    "erasure request": "SN-INC0001011",
+    "db issue": "JIRA-1003",
+    "database problem": "JIRA-1003",
+}
+
+
 class TaskPilotChat:
     def __init__(self, state: WorkflowState) -> None:
         self.state = state
@@ -331,6 +350,14 @@ class TaskPilotChat:
 
     def _find_task_in_question(self, question: str) -> UnifiedTask | None:
         q_lower = question.lower()
+
+        # Check demo aliases first for reliable demo-path lookups.
+        for phrase, task_id in _DEMO_ALIASES.items():
+            if phrase in q_lower:
+                match = next((t for t in self.state.ranked_tasks if t.task_id == task_id), None)
+                if match:
+                    return match
+
         best: UnifiedTask | None = None
         best_overlap = 0
         stop = {"why", "is", "the", "my", "#1", "ranked", "top", "number", "task",
@@ -338,7 +365,8 @@ class TaskPilotChat:
         q_words = set(re.sub(r"[^a-z0-9\s]", " ", q_lower).split()) - stop
         for t in self.state.ranked_tasks:
             t_words = set(re.sub(r"[^a-z0-9\s]", " ", t.title.lower()).split())
-            overlap = len(q_words & t_words)
+            label_words = set(lbl.replace("-", " ") for lbl in (t.labels or []))
+            overlap = len(q_words & (t_words | label_words))
             if overlap > best_overlap:
                 best_overlap = overlap
                 best = t
