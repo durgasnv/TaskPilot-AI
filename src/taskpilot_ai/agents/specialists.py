@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
 
 from taskpilot_ai.agents.base import Agent
@@ -56,6 +58,91 @@ def _parse_unified_tasks(llm_output: str, source: FileSource) -> list[UnifiedTas
         except Exception:
             continue
     return tasks
+
+
+def _score_task(task: UnifiedTask) -> tuple[float, str]:
+    """Compute a priority score (0-100) and plain-English rationale for a task."""
+    score = 0.0
+    reasons: list[str] = []
+
+    # Severity — 40 pts max
+    sev_pts = {"P1": 40.0, "P2": 30.0, "P3": 15.0, "P4": 5.0}
+    s = str(task.severity or "P3")
+    pts = sev_pts.get(s, 10.0)
+    score += pts
+    reasons.append(f"{s} severity ({pts:.0f} pts)")
+
+    # Deadline proximity — 30 pts max
+    if task.deadline:
+        dl = task.deadline
+        if dl.tzinfo is None:
+            dl = dl.replace(tzinfo=timezone.utc)
+        days = (dl - datetime.now(timezone.utc)).total_seconds() / 86400
+        if days < 0:
+            dl_pts, label = 30.0, "overdue"
+        elif days < 1:
+            dl_pts, label = 28.0, "due today"
+        elif days < 2:
+            dl_pts, label = 22.0, "due tomorrow"
+        elif days < 4:
+            dl_pts, label = 15.0, f"due in {int(days)} days"
+        elif days < 8:
+            dl_pts, label = 8.0, f"due in {int(days)} days"
+        else:
+            dl_pts, label = 3.0, f"due in {int(days)} days"
+        score += dl_pts
+        reasons.append(f"{label} ({dl_pts:.0f} pts)")
+
+    # Blocks other tasks — 20 pts max
+    if task.blocks:
+        blk_pts = min(20.0, len(task.blocks) * 7.0)
+        score += blk_pts
+        reasons.append(f"blocks {len(task.blocks)} task(s) ({blk_pts:.0f} pts)")
+
+    # Business impact — 10 pts
+    if task.business_impact and len(task.business_impact.strip()) > 5:
+        score += 10.0
+        reasons.append(f"business impact: {task.business_impact[:80]}")
+
+    rationale = " | ".join(reasons)
+    return round(score, 1), rationale
+
+
+_DEDUP_STOPWORDS = {
+    'a', 'an', 'the', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'for',
+    'to', 'of', 'and', 'or', 'but', 'with', 'from', 'that', 'this', 'by',
+    'be', 'has', 'have', 'been', 'will', 'not', 'all', 'we', 'our', 'your',
+    'my', 'its', 'it', 'do', 're', 'up', 'as', 'no', 'due', 'new', 'via',
+    'get', 'set', 'run', 'per', 'its', 'also', 'into', 'than', 'then',
+}
+
+
+def _basic_keyword_dedup(tasks: list[UnifiedTask]) -> list[UnifiedTask]:
+    """
+    Title-keyword deduplication fallback for when Dev3's vector engine isn't available.
+    Two tasks sharing 2+ significant words in their TITLES are considered duplicates.
+    Descriptions are intentionally excluded — they contain too many generic words.
+    The first-seen task is kept as canonical; later duplicates get duplicate_of set.
+    """
+    def title_kw(task: UnifiedTask) -> set[str]:
+        words = re.sub(r"[^a-z0-9\s]", " ", task.title.lower()).split()
+        return {w for w in words if len(w) > 2 and w not in _DEDUP_STOPWORDS}
+
+    kw_cache = {t.task_id: title_kw(t) for t in tasks}
+    duplicate_of: dict[str, str] = {}
+
+    for i, ti in enumerate(tasks):
+        if ti.task_id in duplicate_of:
+            continue
+        for tj in tasks[i + 1:]:
+            if tj.task_id in duplicate_of:
+                continue
+            shared = kw_cache[ti.task_id] & kw_cache[tj.task_id]
+            if len(shared) >= 2:
+                duplicate_of[tj.task_id] = ti.task_id
+                tj.duplicate_of = ti.task_id
+
+    return [t for t in tasks if t.task_id not in duplicate_of]
 
 
 class AgentMode(str, Enum):
@@ -151,8 +238,14 @@ class DeduplicationAgent(Agent):
             )
         else:
             if not state.deduplicated_tasks:
-                state.deduplicated_tasks = list(state.extracted_tasks)
-            state.trace(self.name, "Passthrough dedup (no engine connected). Dev3 will replace.")
+                before = len(state.extracted_tasks)
+                state.deduplicated_tasks = _basic_keyword_dedup(state.extracted_tasks)
+                removed = before - len(state.deduplicated_tasks)
+                state.trace(
+                    self.name,
+                    f"Keyword dedup: {before} → {len(state.deduplicated_tasks)} tasks "
+                    f"({removed} duplicates merged). Dev3 will replace with vector engine.",
+                )
         return state
 
 
@@ -166,13 +259,11 @@ class PrioritizationAgent(Agent):
             state.ranked_tasks = self.engine.rank(state.deduplicated_tasks)
         else:
             if not state.ranked_tasks:
-                _severity_order = {Severity.P1: 0, Severity.P2: 1, Severity.P3: 2, Severity.P4: 3}
                 for task in state.deduplicated_tasks:
-                    task.priority_score = 0.0
-                    task.priority_rationale = "Ranking logic not connected yet. Dev3 will replace."
+                    task.priority_score, task.priority_rationale = _score_task(task)
                 state.ranked_tasks = sorted(
                     state.deduplicated_tasks,
-                    key=lambda t: _severity_order.get(t.severity, 4),
+                    key=lambda t: -(t.priority_score or 0.0),
                 )
 
         if state.emergency_mode:
