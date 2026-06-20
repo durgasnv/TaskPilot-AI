@@ -136,34 +136,92 @@ def normalize_all_sources(
 
 
 def _parse_injected_p1(file_path: Path) -> Optional[UnifiedTask]:
-    """Parse a dropped P1 injection file from data/injected/."""
+    """
+    Parse any file dropped into data/injected/ as a P1 task.
+    Handles: {"incident": {...}}, {"issue": {...}}, flat dicts,
+    JSON arrays, and plain text files.
+    """
     from src.pipeline.privacy import scrub_text
     from src.schemas.unified_task import Severity, TaskSource, TaskStatus
+    from datetime import datetime
 
-    with file_path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
+    content = file_path.read_text(encoding="utf-8")
 
-    incident = data.get("incident")
-    if not incident:
+    # Try JSON first
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        # Plain text — first line becomes the title
+        lines = [l.strip() for l in content.splitlines() if l.strip()]
+        title = lines[0][:200] if lines else "Injected P1 Incident"
+        return UnifiedTask(
+            task_id=f"INJECTED-{file_path.stem.upper()}",
+            source=TaskSource.SERVICENOW,
+            source_id=file_path.stem,
+            title=scrub_text(title),
+            description=scrub_text(" ".join(lines[1:])[:2000]),
+            severity=Severity.P1,
+            status=TaskStatus.OPEN,
+            extracted=True,
+            business_impact="Injected at runtime.",
+        )
+
+    # Unwrap single-record wrappers: {"incident": {...}}, {"issue": {...}}, etc.
+    record: dict = {}
+    if isinstance(data, dict):
+        for key in ("incident", "issue", "ticket", "task", "record", "item", "bug"):
+            if key in data and isinstance(data[key], dict):
+                record = data[key]
+                break
+        if not record:
+            record = data  # bare dict — treat the whole thing as the record
+    elif isinstance(data, list) and data and isinstance(data[0], dict):
+        record = data[0]  # take the first item from an array
+    else:
         return None
 
-    from datetime import datetime, timezone
+    # Map common field names to UnifiedTask fields
+    task_id = str(
+        record.get("number") or record.get("id") or record.get("key")
+        or record.get("task_id") or record.get("ref") or file_path.stem
+    )
+    title = str(
+        record.get("short_description") or record.get("title") or record.get("summary")
+        or record.get("subject") or record.get("name") or "Injected P1 Incident"
+    )[:200]
+    description = str(
+        record.get("description") or record.get("body") or record.get("details") or ""
+    )[:2000]
+    business_impact = str(record.get("business_impact") or record.get("impact") or "")
+
+    raw_deadline = record.get("sla_due") or record.get("deadline") or record.get("due_date")
+    deadline = None
+    if raw_deadline:
+        try:
+            deadline = datetime.fromisoformat(str(raw_deadline).replace("Z", "+00:00"))
+        except ValueError:
+            pass
+
+    raw_created = record.get("opened_at") or record.get("created_at")
+    created_at = None
+    if raw_created:
+        try:
+            created_at = datetime.fromisoformat(str(raw_created).replace("Z", "+00:00"))
+        except ValueError:
+            pass
+
     return UnifiedTask(
-        task_id=f"INJECTED-{incident.get('number', 'P1')}",
+        task_id=f"INJECTED-{task_id}",
         source=TaskSource.SERVICENOW,
-        source_id=incident.get("number", "INJECTED"),
-        title=scrub_text(incident.get("short_description", "Injected P1 Incident")),
-        description=scrub_text(incident.get("description", "")),
-        deadline=datetime.fromisoformat(
-            incident["sla_due"].replace("Z", "+00:00")
-        ) if incident.get("sla_due") else None,
-        created_at=datetime.fromisoformat(
-            incident["opened_at"].replace("Z", "+00:00")
-        ) if incident.get("opened_at") else None,
+        source_id=task_id,
+        title=scrub_text(title),
+        description=scrub_text(description),
+        deadline=deadline,
+        created_at=created_at,
         severity=Severity.P1,
         status=TaskStatus.OPEN,
-        labels=incident.get("tags", []),
-        assignee=scrub_text(incident.get("assigned_to", "")),
+        labels=record.get("tags", []),
+        assignee=scrub_text(str(record.get("assigned_to", ""))),
         extracted=False,
-        business_impact=scrub_text(incident.get("business_impact", "")),
+        business_impact=scrub_text(business_impact),
     )
