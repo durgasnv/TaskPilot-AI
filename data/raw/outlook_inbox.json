@@ -1,0 +1,32 @@
+From: vp.engineering@company.com
+To: engineer@company.com
+Date: Thu, 19 Jun 2026 08:14:00 -0500
+Subject: URGENT: Media upload latency — customer complaint escalation
+
+Hi,
+
+I got a call from our enterprise customer Acme Corp this morning. Their team reported that media file uploads on the dashboard are taking 8-12 seconds consistently, up from the usual 1-2 seconds. They have an SLA with us that guarantees sub-3s uploads.
+
+I need two things from you today:
+1. A written root-cause assessment by end of business today (EOD 6 PM).
+2. A fix timeline by tomorrow morning standup.
+
+This is blocking their quarterly review demo scheduled for Friday. If we miss this, we risk the renewal.
+
+Please treat this as your top priority.
+
+Thanks,
+VP Engineering
+
+---
+
+From: teammate@company.com
+To: engineer@company.com
+Date: Thu, 19 Jun 2026 09:45:00 -0500
+Subject: Re: PR Review Request — #442 (retry logic)
+
+Hey,
+
+Can you review PR #442 when you get a chance? It adds retry logic to the file upload service. Nothing urgent but it's blocking my next task.
+
+Thanks

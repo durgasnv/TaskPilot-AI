@@ -15,10 +15,10 @@ class AppConfig:
     app_name: str = "TaskPilot AI"
     sources: list[SourceConfig] = field(
         default_factory=lambda: [
-            SourceConfig(name="jira", path="data/jira.json"),
-            SourceConfig(name="servicenow", path="data/servicenow.json"),
-            SourceConfig(name="outlook", path="data/outlook.txt"),
-            SourceConfig(name="meeting_notes", path="data/meeting_notes.txt"),
+            SourceConfig(name="jira", path="data/raw/jira_board.json"),
+            SourceConfig(name="servicenow", path="data/raw/servicenow_defects.json"),
+            SourceConfig(name="outlook", path="data/raw/outlook_inbox.json"),
+            SourceConfig(name="meeting_notes", path="data/raw/meeting_transcripts.json"),
         ]
     )
 

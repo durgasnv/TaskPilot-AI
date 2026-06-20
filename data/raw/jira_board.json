@@ -1,0 +1,45 @@
+{
+  "sprint": "Sprint 42",
+  "board": "Platform Engineering",
+  "issues": [
+    {
+      "id": "JIRA-101",
+      "type": "Bug",
+      "summary": "Fix payment gateway timeout on checkout",
+      "description": "Users are hitting a 30-second timeout during card processing on the /checkout endpoint. Affects approximately 12% of transactions in peak hours. Root cause suspected to be missing connection pool tuning in the Stripe SDK wrapper.",
+      "priority": "P1",
+      "status": "In Progress",
+      "assignee": "engineer@company.com",
+      "due_date": "2026-06-22",
+      "labels": ["payment", "backend", "sla-breach"],
+      "dependencies": [],
+      "story_points": 8
+    },
+    {
+      "id": "JIRA-102",
+      "type": "Task",
+      "summary": "Upgrade auth library to patch CVE-2026-1234",
+      "description": "Security advisory CVE-2026-1234 affects jwt-go v3.x. Must upgrade to v4.x. Coordinate with the mobile team since they depend on the same token format.",
+      "priority": "P2",
+      "status": "To Do",
+      "assignee": "engineer@company.com",
+      "due_date": "2026-06-25",
+      "labels": ["security", "auth"],
+      "dependencies": ["JIRA-101"],
+      "story_points": 5
+    },
+    {
+      "id": "JIRA-103",
+      "type": "Story",
+      "summary": "Add pagination to /api/tasks endpoint",
+      "description": "Current endpoint returns all tasks in one response. Large accounts hit memory limits. Implement cursor-based pagination.",
+      "priority": "P3",
+      "status": "To Do",
+      "assignee": "engineer@company.com",
+      "due_date": "2026-06-28",
+      "labels": ["api", "performance"],
+      "dependencies": [],
+      "story_points": 3
+    }
+  ]
+}
