@@ -8,6 +8,7 @@ class SourceConfig:
     name: str
     enabled: bool = True
     path: str | None = None
+    retries: int = 2
 
 
 @dataclass(slots=True)
