@@ -1,10 +1,29 @@
 import unittest
 
+from taskpilot_ai.agents.specialists import DeduplicationAgent, IngestionAgent, ExtractionAgent, PrioritizationAgent, PlanningAgent
+from taskpilot_ai.config import AppConfig, SourceConfig
 from taskpilot_ai.orchestration.graph import TaskPilotGraph
 from taskpilot_ai.orchestration.state import WorkflowState
 from taskpilot_ai.prompts.extraction import build_react_user_prompt
 from taskpilot_ai.tools.source_reader import FileSystemSourceReader
-from taskpilot_ai.models import SourceDocument, TaskSource
+from taskpilot_ai.models import SourceDocument, FileSource
+
+
+def _graph_with_missing_sources() -> TaskPilotGraph:
+    """Build a graph whose ingestion agent points to paths that do not exist."""
+    missing_config = AppConfig(
+        sources=[
+            SourceConfig(name="jira", path="data/nonexistent_jira.json"),
+            SourceConfig(name="servicenow", path="data/nonexistent_sn.json"),
+        ]
+    )
+    return TaskPilotGraph(agents=[
+        IngestionAgent(config=missing_config),
+        ExtractionAgent(),
+        DeduplicationAgent(),
+        PrioritizationAgent(),
+        PlanningAgent(),
+    ])
 
 
 class TaskPilotGraphTests(unittest.TestCase):
@@ -20,7 +39,7 @@ class TaskPilotGraphTests(unittest.TestCase):
         self.assertIn("planning", trace_steps)
 
     def test_missing_source_files_do_not_break_graph(self) -> None:
-        state = TaskPilotGraph().run(WorkflowState())
+        state = _graph_with_missing_sources().run(WorkflowState())
 
         self.assertEqual(state.raw_inputs, {})
         self.assertTrue(
@@ -30,7 +49,7 @@ class TaskPilotGraphTests(unittest.TestCase):
     def test_react_prompt_contains_grounding_and_source_context(self) -> None:
         prompt = build_react_user_prompt(
             SourceDocument(
-                source=TaskSource.OUTLOOK,
+                source=FileSource.OUTLOOK,
                 content="Please fix the payment bug before Friday.",
                 location="data/outlook.txt",
             )
@@ -41,7 +60,7 @@ class TaskPilotGraphTests(unittest.TestCase):
         self.assertIn("Please fix the payment bug before Friday.", prompt)
 
     def test_reader_reports_missing_file(self) -> None:
-        result = FileSystemSourceReader().read(TaskSource.JIRA, "data/missing.json")
+        result = FileSystemSourceReader().read(FileSource.JIRA, "data/missing.json")
 
         self.assertIsNone(result.document)
         self.assertIn("Missing source file", result.error or "")

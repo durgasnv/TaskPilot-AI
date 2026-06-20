@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 
-from taskpilot_ai.models import SourceDocument, TaskSource
+from taskpilot_ai.models import SourceDocument, FileSource
 
 
 @dataclass(slots=True)
@@ -17,12 +17,12 @@ class ReadResult:
 
 class SourceReader(ABC):
     @abstractmethod
-    def read(self, source: TaskSource, location: str | None) -> ReadResult:
+    def read(self, source: FileSource, location: str | None) -> ReadResult:
         """Read a source payload from its configured location."""
 
 
 class FileSystemSourceReader(SourceReader):
-    def read(self, source: TaskSource, location: str | None) -> ReadResult:
+    def read(self, source: FileSource, location: str | None) -> ReadResult:
         if not location:
             return ReadResult(document=None, error="No path configured.")
 
