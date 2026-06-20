@@ -47,6 +47,7 @@ class FileDropMonitor:
     graph_runner: Callable[[WorkflowState], WorkflowState] | None = None
 
     _seen_files: set[Path] = field(default_factory=set, init=False, repr=False)
+    _seeded: bool = field(default=False, init=False, repr=False)
     _running: bool = field(default=False, init=False, repr=False)
 
     def _scan(self) -> list[Path]:
@@ -90,11 +91,10 @@ class FileDropMonitor:
             self.graph_runner = graph_runner
 
         self._running = True
-        self._seen_files = set()
 
-        # Seed initial state so existing files do not trigger on first scan.
-        if self.watch_dir.exists():
-            self._seen_files = set(self.watch_dir.iterdir())
+        # Seed only on first call so that resuming does not lose accumulated state.
+        if not self._seeded:
+            self.seed()
 
         iterations = 0
         while self._running:
@@ -106,6 +106,13 @@ class FileDropMonitor:
             if max_iterations is not None and iterations >= max_iterations:
                 break
             time.sleep(self.poll_interval)
+
+    def seed(self) -> None:
+        """Explicitly seed seen-files from the current directory contents.
+        Call this before start() when you want a clean baseline."""
+        if self.watch_dir.exists():
+            self._seen_files = set(self.watch_dir.iterdir())
+        self._seeded = True
 
     def stop(self) -> None:
         self._running = False
