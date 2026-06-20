@@ -35,6 +35,7 @@ def _build_graph() -> TaskPilotGraph:
     ])
 
 
+
 def _format_deadline(deadline: "datetime | None", now: datetime) -> str:
     if not deadline:
         return "no deadline"
