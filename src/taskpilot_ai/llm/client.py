@@ -151,6 +151,11 @@ class MockLLMClient(LLMClient):
             for key in ("incident", "issue", "ticket", "task", "record", "email", "item"):
                 if key in data and isinstance(data[key], dict):
                     return json.dumps([self._dict_to_task(data[key], "INJECTED-001")])
+            # Unknown wrapper key (backlog, work_items, bugs, requests, etc.)
+            # Find any key whose value is a non-empty list of dicts — that's the task list.
+            for key, value in data.items():
+                if isinstance(value, list) and value and isinstance(value[0], dict):
+                    return self._extract_from_json(value)
             # Bare dict — treat as a single task
             return json.dumps([self._dict_to_task(data, "INJECTED-001")])
 
@@ -160,7 +165,8 @@ class MockLLMClient(LLMClient):
         """Map arbitrary dict keys to UnifiedTask fields."""
         task_id = str(
             item.get("task_id") or item.get("id") or item.get("number")
-            or item.get("key") or item.get("ticket_id") or fallback_id
+            or item.get("key") or item.get("ticket_id") or item.get("ref")
+            or item.get("code") or item.get("issue_id") or fallback_id
         )
         title = str(
             item.get("title") or item.get("summary") or item.get("short_description")
