@@ -87,15 +87,19 @@ Design and build an AI Agent (**TaskPilot AI**) that serves as a personal task i
 | **Team-level dashboard** | Aggregate view for a manager persona |
 | **MCP/A2A protocol usage** | Implement tool connectivity via Model Context Protocol |
 | **Calendar-aware planning** | Factor in meeting schedule when generating time-blocked plans |
+| **Privacy & PII scrubbing** *(team addition)* | Automatically redact sensitive data (phone numbers, email addresses, credentials, Aadhaar numbers, credit card numbers) from all source documents before LLM processing. Zero PII reaches the model. |
 
 ## 6. Constraints / Limitations
 * **LLM API Usage:** Teams may use any LLM provider. Free-tier models (Gemini, Llama via Ollama) are encouraged.
 * **No Pre-Built Task Managers:** You may not wrap an existing tool (Todoist, Notion, etc.). Intelligence must be built by your team.
 * **Data Sources:** Use the provided simulated data. You may add additional simulated sources but the provided data must be processable.
 * **Open Source:** All code must be written during the hackathon. Open-source libraries and frameworks are allowed.
-* **Guidelines:** * Try to use simulated data, wherever feasible use the real world data.
-  * Agent must be transparent about its reasoning (no black-box decisions).
-  * Prioritization logic must be auditable and explainable.
+* **Privacy by Design** *(team addition)*: All PII (phone numbers, email addresses, credentials, Aadhaar numbers, credit card numbers, AWS keys) must be scrubbed before reaching the LLM. The agent must not expose raw personal data in any output or trace.
+
+**Guidelines:**
+* Try to use simulated data, wherever feasible use the real world data.
+* Agent must be transparent about its reasoning (no black-box decisions).
+* Prioritization logic must be auditable and explainable.
 
 ## 7. Assumptions
 * **Simulated environment:** Teams will work with simulated data that represents realistic enterprise task sources.
@@ -214,7 +218,19 @@ Use the simulated data on your own.
 | **Demo & Presentation** | Clarity of demo, storytelling, and real-world applicability |
 
 ## 16. Stretch Goals (Bonus Points)
-*[Add details here]*
+
+The following stretch goals have been implemented beyond the MVP requirements:
+
+| Goal | Status | Description |
+| :--- | :--- | :--- |
+| **Multi-agent architecture** | Implemented | 5 specialized agents in a sequential pipeline: Ingestion → Extraction → Deduplication → Prioritization → Planning. Each agent has a single responsibility and communicates via a shared `WorkflowState` baton. |
+| **Dynamic re-prioritization** | Implemented | `FileDropMonitor` watches `data/injected/` for new files at runtime. Dropping any file (JSON, text, email format) triggers an automatic emergency re-run with the new task inserted at the correct priority position. |
+| **Dependency graph awareness** | Implemented | `blocked_by` and `blocks` relationships are parsed from source data and factored into the priority score (blocking other tasks adds up to 20 points). |
+| **Meeting notes parsing** | Implemented | Meeting transcript JSON is parsed and action items are extracted as `TaskSource.TRANSCRIPT` tasks, surfaced alongside Jira and email tasks. |
+| **Proactive alerting** | Implemented | Emergency mode automatically promotes all P1 tasks to the top of the ranked list and logs an alert trace when a high-priority injected file is detected. |
+| **Privacy & PII scrubbing** *(team addition)* | Implemented | Deterministic pre-LLM scrubbing pipeline redacts phone numbers, email addresses, Aadhaar numbers, credit card numbers, AWS access keys, and AWS secret keys before any data reaches the LLM or appears in output. Scrubbing is auditable via unit tests. |
+| **Adaptive file format handling** *(team addition)* | Implemented | The ingestion layer auto-detects unknown file formats dropped at runtime — handles arbitrary JSON wrappers (`backlog`, `tickets`, `work_items`, etc.), flat JSON arrays, single-record objects, and plain text files. No configuration required. |
+| **Explainable scoring rationale** *(team addition)* | Implemented | Every task carries a `priority_rationale` string (e.g., *"P1 severity (40 pts) \| due today (28 pts) \| blocks 1 task(s) (7 pts) \| business impact: ACME Corp..."*) that is surfaced in the daily plan and conversational interface. |
 
 ## 17. Additional References / Links
 
