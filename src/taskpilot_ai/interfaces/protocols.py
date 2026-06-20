@@ -37,10 +37,9 @@ class VectorDeduplicatorProtocol(Protocol):
     """
     Dev3 implements this.
 
-    The deduplicator receives the full list of extracted TaskRecords and
-    returns a smaller list where semantically identical tasks (>=85%
-    embedding similarity) have been merged into a single representative
-    record.
+    The deduplicator receives the full list of extracted UnifiedTask objects
+    and returns a smaller list where semantically identical tasks (>=85%
+    embedding similarity) have been merged into a single representative task.
 
     The implementation is expected to use ChromaDB or FAISS internally.
     Dev2's DeduplicationAgent calls this and writes the result into
@@ -56,13 +55,13 @@ class PrioritizerProtocol(Protocol):
     """
     Dev3 implements this.
 
-    The prioritizer receives deduplicated TaskRecords and returns a list of
-    RankedTask objects — each pairing a task with a float score and a plain-
-    English rationale string.
+    The prioritizer receives deduplicated UnifiedTask objects and returns
+    them sorted by priority, with priority_score and priority_rationale
+    set on each task.
 
     Scoring must factor in deadline proximity, severity, and dependency
-    depth. The rationale must be non-empty (black-box ranking is blocked by
-    the PRD).
+    depth. priority_rationale must be non-empty — black-box ranking is
+    blocked by the PRD.
     """
 
     def rank(self, tasks: list[UnifiedTask]) -> list[UnifiedTask]:

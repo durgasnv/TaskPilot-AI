@@ -11,10 +11,10 @@ from taskpilot_ai.agents.react_runtime import build_extraction_packet, build_ing
 from taskpilot_ai.config import AppConfig
 from taskpilot_ai.interfaces.protocols import VectorDeduplicatorProtocol, PrioritizerProtocol
 from taskpilot_ai.llm.client import LLMClient, MockLLMClient
-from taskpilot_ai.models import FileSource, SourceDocument
+from taskpilot_ai.models import FileSource
 from taskpilot_ai.orchestration.state import WorkflowState
 from taskpilot_ai.tools.source_reader import FileSystemSourceReader, NormalizerSourceReader, SourceReader
-from taskpilot_ai.unified_task import Severity, TaskSource, TaskStatus, UnifiedTask
+from taskpilot_ai.unified_task import Severity, TaskSource, UnifiedTask
 
 
 # Maps our internal FileSource names to UnifiedTask TaskSource enum values.
