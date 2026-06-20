@@ -1,11 +1,13 @@
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+.pytest_cache/
 *.egg-info/
 .venv/
 venv/
 .env
 *.log
+dist/
+build/
 demo_backup.mp4
 chroma_db/
 faiss_index/
