@@ -34,7 +34,7 @@ class FileDropMonitor:
     3. Triggers the graph_runner callable to re-run orchestration
 
     Args:
-        watch_dir:    Directory to monitor. Defaults to 'data/'.
+        watch_dir:    Directory to monitor. Defaults to 'data/injected'.
         poll_interval: Seconds between scans. Default 5.
         notifier:     NotifierProtocol implementation. Defaults to CLI print.
         graph_runner: Callable that accepts a WorkflowState and returns one.
