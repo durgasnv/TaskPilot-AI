@@ -1,19 +1,22 @@
 """CLI entry point — runs the full TaskPilot pipeline and prints the daily plan."""
 
-from taskpilot_ai.agents.specialists import IngestionAgent, ExtractionAgent, DeduplicationAgent, PrioritizationAgent, PlanningAgent
+import sys
+
+from taskpilot_ai.agents.specialists import (
+    DeduplicationAgent,
+    ExtractionAgent,
+    IngestionAgent,
+    PlanningAgent,
+    PrioritizationAgent,
+)
 from taskpilot_ai.orchestration.graph import TaskPilotGraph
 from taskpilot_ai.orchestration.state import WorkflowState
 from taskpilot_ai.tools.source_reader import NormalizerSourceReader
 
 
 def _build_graph() -> TaskPilotGraph:
-    """
-    Build the pipeline. Tries Dev1's NormalizerSourceReader (full parser + PII scrubbing)
-    first; falls back to FileSystemSourceReader + MockLLMClient if the normalizer
-    isn't available (e.g. running in isolation without src/ on the path).
-    """
     try:
-        from src.pipeline.normalizer import normalize_all_sources  # noqa: F401 — import check only
+        from src.pipeline.normalizer import normalize_all_sources  # noqa: F401
         reader = NormalizerSourceReader()
     except ImportError:
         from taskpilot_ai.tools.source_reader import FileSystemSourceReader
@@ -29,17 +32,23 @@ def _build_graph() -> TaskPilotGraph:
 
 
 def main() -> None:
+    chat_mode = "--chat" in sys.argv
+
     print("TaskPilot AI — generating your daily plan...\n")
 
     graph = _build_graph()
     state = graph.run(WorkflowState())
 
-    source_summary = list(state.raw_inputs.keys()) or list(
-        {t.source for t in state.extracted_tasks}
+    source_summary = list(state.raw_inputs.keys()) or sorted(
+        {str(t.source) for t in state.extracted_tasks}
     )
+    extracted = len(state.extracted_tasks)
+    deduped = len(state.deduplicated_tasks)
+    removed = extracted - deduped
+
     print(f"Sources loaded : {source_summary}")
-    print(f"Tasks extracted: {len(state.extracted_tasks)}")
-    print(f"After dedup    : {len(state.deduplicated_tasks)}")
+    print(f"Tasks extracted: {extracted}")
+    print(f"After dedup    : {deduped} ({removed} duplicates merged)")
     print()
 
     print("── Daily Plan ──────────────────────────────────")
@@ -52,7 +61,21 @@ def main() -> None:
         print("  (no tasks — check source data)")
 
     print()
-    print(f"Execution traces: {len(state.traces)}")
+    if state.ranked_tasks:
+        print("── Top 5 Priority Rationale ────────────────────")
+        for t in state.ranked_tasks[:5]:
+            print(f"  [{t.severity}] {t.title[:60]}")
+            print(f"    Score: {t.priority_score} | {t.priority_rationale}")
+        print()
+
+    if chat_mode:
+        from taskpilot_ai.chat import run_chat
+        run_chat(state)
+    else:
+        print("Tip: run with --chat to ask questions about your tasks.")
+        print()
+
+    print(f"Execution traces ({len(state.traces)}):")
     for trace in state.traces:
         print(f"  [{trace.step}] {trace.detail}")
 
