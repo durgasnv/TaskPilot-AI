@@ -13,7 +13,7 @@ from taskpilot_ai.interfaces.protocols import VectorDeduplicatorProtocol, Priori
 from taskpilot_ai.llm.client import LLMClient, MockLLMClient
 from taskpilot_ai.models import FileSource, SourceDocument
 from taskpilot_ai.orchestration.state import WorkflowState
-from taskpilot_ai.tools.source_reader import FileSystemSourceReader, SourceReader
+from taskpilot_ai.tools.source_reader import FileSystemSourceReader, NormalizerSourceReader, SourceReader
 from taskpilot_ai.unified_task import Severity, TaskSource, TaskStatus, UnifiedTask
 
 
@@ -70,6 +70,21 @@ class IngestionAgent(Agent):
     mode: AgentMode = AgentMode.REACT
 
     def run(self, state: WorkflowState) -> WorkflowState:
+        # Bulk path: Dev1's normalizer handles all parsing and PII scrubbing in one call.
+        if isinstance(self.reader, NormalizerSourceReader):
+            result = self.reader.load_all()
+            for err in result.errors:
+                state.trace(self.name, f"Normalizer warning: {err}")
+            state.extracted_tasks.extend(result.tasks)
+            for src, count in result.source_counts.items():
+                state.memory.source_locations[src] = f"data/raw/{src}"
+            state.trace(
+                self.name,
+                f"Normalizer loaded {len(result.tasks)} tasks from {result.source_counts}.",
+            )
+            return state
+
+        # Per-file path: FileSystemSourceReader reads raw files one at a time.
         for source_config in self.config.sources:
             if not source_config.enabled:
                 continue
