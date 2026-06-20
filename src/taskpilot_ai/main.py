@@ -22,11 +22,13 @@ def _build_graph() -> TaskPilotGraph:
         from taskpilot_ai.tools.source_reader import FileSystemSourceReader
         reader = FileSystemSourceReader()
 
+    from taskpilot_ai.analytics import TFIDFVectorDeduplicator, ScoringPrioritizer
+
     return TaskPilotGraph(agents=[
         IngestionAgent(reader=reader),
         ExtractionAgent(),
-        DeduplicationAgent(),
-        PrioritizationAgent(),
+        DeduplicationAgent(engine=TFIDFVectorDeduplicator(threshold=0.85)),
+        PrioritizationAgent(engine=ScoringPrioritizer()),
         PlanningAgent(),
     ])
 
