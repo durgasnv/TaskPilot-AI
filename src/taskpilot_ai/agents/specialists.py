@@ -166,10 +166,14 @@ class PrioritizationAgent(Agent):
             state.ranked_tasks = self.engine.rank(state.deduplicated_tasks)
         else:
             if not state.ranked_tasks:
+                _severity_order = {Severity.P1: 0, Severity.P2: 1, Severity.P3: 2, Severity.P4: 3}
                 for task in state.deduplicated_tasks:
                     task.priority_score = 0.0
                     task.priority_rationale = "Ranking logic not connected yet. Dev3 will replace."
-                state.ranked_tasks = list(state.deduplicated_tasks)
+                state.ranked_tasks = sorted(
+                    state.deduplicated_tasks,
+                    key=lambda t: _severity_order.get(t.severity, 4),
+                )
 
         if state.emergency_mode:
             state.ranked_tasks.sort(
