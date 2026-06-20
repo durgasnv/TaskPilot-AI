@@ -1,25 +1,204 @@
-Sprint Review Meeting — Platform Engineering
-Date: Wednesday, 18 June 2026
-Attendees: Tech Lead, Engineer (you), QA Lead, Product Manager
-
---- TRANSCRIPT ---
-
-Tech Lead: Let's go through yesterday's incidents first. The ingestion pipeline dropped three files silently overnight and no alert fired. We only found out because the morning report was missing data.
-
-QA Lead: That's the third time this month. The root cause is that we have no retry logic — if a file read fails, it just logs and moves on.
-
-Tech Lead: Agreed. ACTION ITEM: Add retry logic with at least two attempts and exponential backoff to the file ingestion pipeline. Owner: engineer. Due by end of next sprint (June 26).
-
-Product Manager: On the dashboard side — the upload latency spike is also showing up in our product telemetry. It's been climbing since the June 14 deployment. We need someone to profile the upload service.
-
-Engineer: I'll take that. I can do a flame graph run this afternoon.
-
-Tech Lead: Good. ACTION ITEM: Profile upload service and identify the regression introduced in the June 14 deployment. Owner: engineer. Due by Friday June 20.
-
-Product Manager: Last item — we committed to adding CSV export to the task list view for enterprise customers. Is that still on track?
-
-Engineer: It was deprioritized last sprint due to the SN-5501 incident. I can pick it back up once the DB issue is resolved.
-
-Tech Lead: OK, add it back to the backlog. No hard deadline but aim for next sprint.
-
---- END OF TRANSCRIPT ---
+{
+  "exported_at": "2026-06-19T08:00:00Z",
+  "meetings": [
+    {
+      "id": "MTG-001",
+      "title": "Sprint 24 Daily Standup — June 18, 2026",
+      "date": "2026-06-18",
+      "time": "09:00 UTC",
+      "attendees": ["dev_alice", "dev_carol", "dev_george", "dev_eve", "dev_julia", "pm_bob"],
+      "duration_minutes": 15,
+      "transcript": [
+        {"speaker": "pm_bob", "text": "Good morning everyone. Let's go through updates quickly. Alice, you're first."},
+        {"speaker": "dev_alice", "text": "Yesterday I was deep in the upload timeout issue — JIRA-1001. I've identified the root cause: our nginx proxy has a 30-second hard timeout that's killing large file transfers. I'm implementing chunked upload with a streaming approach. I should have a fix ready for staging by end of today."},
+        {"speaker": "pm_bob", "text": "Good. That's our top P1. Anything blocking you?"},
+        {"speaker": "dev_alice", "text": "The security incident from last night is a distraction — I need to handle the AWS key rotation this morning before anything else. Frank wants it done before noon. Also I need to review George's PR 892 today."},
+        {"speaker": "pm_bob", "text": "Noted. Carol?"},
+        {"speaker": "dev_carol", "text": "I'm working on the mobile auth token refresh — JIRA-1002. I have a reproducer now. The issue is the silent 401 handling in the refresh interceptor. Fix looks straightforward but I'm also being pulled onto the notification memory leak — JIRA-1011. Can someone take JIRA-1011 off my plate? I'm worried about splitting focus on two P2s."},
+        {"speaker": "pm_bob", "text": "Alice, can you assess and decide on JIRA-1011 ownership today?"},
+        {"speaker": "dev_alice", "text": "Yes, I'll sort that by noon."},
+        {"speaker": "pm_bob", "text": "George?"},
+        {"speaker": "dev_george", "text": "Yesterday I submitted PR 892 for webhook retry logic. Alice, please review today if possible — it's blocking my next task. I'm also starting on the CVE patch for log4js, Frank emailed me this morning about a 24-hour deadline."},
+        {"speaker": "pm_bob", "text": "That CVE is critical, please prioritise it. Eve?"},
+        {"speaker": "dev_eve", "text": "GraphQL migration is going well. Endpoints 1 through 9 are done, 5 remaining. On track for end of sprint. No blockers."},
+        {"speaker": "pm_bob", "text": "Julia?"},
+        {"speaker": "dev_julia", "text": "I'm still blocked on JIRA-1012 — waiting on the backend chunked upload to land. I've been using the time to prep the progress bar component in a feature branch. Also working on dark mode but that's low priority."},
+        {"speaker": "pm_bob", "text": "Two quick items before we close. One: the analytics demo for stakeholders is June 26 — Julia's JIRA-1014 is blocked on Eve's GraphQL work. Eve, can you prioritise the endpoints Julia needs specifically? Two: I need everyone to update their JIRA tickets before noon today. The director is reviewing sprint status at 2 PM. That's it, have a good day team."},
+        {"speaker": "dev_eve", "text": "Yes Bob, I'll make sure the analytics endpoints come first in my remaining 5."},
+        {"speaker": "dev_julia", "text": "Thanks Eve, I'll send you the list."}
+      ],
+      "extracted_action_items": [
+        "Alice: handle AWS key rotation before noon (security priority over upload fix)",
+        "Alice: review PR #892 today",
+        "Alice: decide on JIRA-1011 ownership by noon",
+        "George: prioritise log4js CVE patch (24-hour deadline)",
+        "Eve: prioritise analytics GraphQL endpoints first for Julia",
+        "Julia: send Eve the list of analytics endpoints needed",
+        "All: update JIRA tickets before noon (director sprint review at 14:00)"
+      ]
+    },
+    {
+      "id": "MTG-002",
+      "title": "P1 Incident War Room — ACME Corp File Upload — June 17, 2026",
+      "date": "2026-06-17",
+      "time": "21:00 UTC",
+      "attendees": ["dev_alice", "sre_dan", "pm_bob", "vp_james"],
+      "duration_minutes": 45,
+      "transcript": [
+        {"speaker": "vp_james", "text": "OK let's get into this fast. Alice, what do we know?"},
+        {"speaker": "dev_alice", "text": "ACME Corp has been reporting 504 errors on all file uploads since around 18:00 UTC today. I've confirmed it's reproducible — I just tested with a 5MB file and hit the same timeout. The nginx access logs show the request is being dropped at exactly 30 seconds."},
+        {"speaker": "sre_dan", "text": "I checked the infrastructure side. Nothing changed in the nginx config today. But there was a config drift from a Terraform apply two days ago — it may have reverted a proxy_read_timeout override we had. I'm checking now."},
+        {"speaker": "vp_james", "text": "How long to fix if that's the cause?"},
+        {"speaker": "sre_dan", "text": "If it's just the timeout config, I can push a hotfix in 30 minutes. But if we need the chunked upload implementation, that's a day or two of dev work."},
+        {"speaker": "dev_alice", "text": "I think we need both. The timeout config fix as an immediate patch, and then the proper chunked upload implementation for large files going forward. ACME files are up to 200MB."},
+        {"speaker": "vp_james", "text": "Alice, I need you to own both. Dan, apply the timeout patch tonight if confirmed. Alice, the proper fix must be in staging by tomorrow night and production by Friday. Can you commit to that?"},
+        {"speaker": "dev_alice", "text": "Yes, I can commit to that timeline."},
+        {"speaker": "vp_james", "text": "Bob, draft a customer communication to ACME for me to review by 8 AM. Acknowledge the issue, confirm the timeline, and be specific. No vague 'we're working on it' language."},
+        {"speaker": "pm_bob", "text": "Will do. Should I CC Robert Chen at ACME?"},
+        {"speaker": "vp_james", "text": "Yes, Robert Chen and their operations lead. And post a status page update now — ACME is watching our status page."},
+        {"speaker": "sre_dan", "text": "Found it — the proxy_read_timeout was indeed reverted in the Terraform drift. Applying the fix now."},
+        {"speaker": "vp_james", "text": "Good. Alice, I need a written RCA in my inbox by 8 AM tomorrow even if the fix isn't deployed yet. This goes to ACME's VP."},
+        {"speaker": "dev_alice", "text": "Understood. RCA by 8 AM, staging fix by tomorrow night, production by Friday."},
+        {"speaker": "vp_james", "text": "One more thing — I need a post-mortem document ready by next Friday. This can't happen again. We need process review, not just a fix."}
+      ],
+      "extracted_action_items": [
+        "Alice: write RCA document and send to VP James by 2026-06-18 08:00",
+        "Alice: upload chunked implementation ready for staging by 2026-06-18 EOD",
+        "Alice: production deploy of upload fix by 2026-06-20 EOD (Friday)",
+        "Alice: full post-mortem document ready by 2026-06-26 (next Friday)",
+        "Dan: apply nginx proxy_read_timeout hotfix tonight (2026-06-17)",
+        "Bob: draft ACME customer communication (CC Robert Chen) by 2026-06-18 08:00",
+        "Bob: post status page update immediately (ACME monitoring)"
+      ]
+    },
+    {
+      "id": "MTG-003",
+      "title": "Security Incident Response — AWS Credentials Exposure — June 17, 2026",
+      "date": "2026-06-17",
+      "time": "23:30 UTC",
+      "attendees": ["dev_alice", "security_frank", "cto_helen"],
+      "duration_minutes": 30,
+      "transcript": [
+        {"speaker": "security_frank", "text": "Alice, thanks for joining at this hour. Our scanner flagged your branch at 22:45. The keys are still active as of right now. Every minute they're active increases our exposure window."},
+        {"speaker": "dev_alice", "text": "I know, I'm sorry. It was a config file I accidentally committed. I didn't realise the .gitignore wasn't covering that path."},
+        {"speaker": "cto_helen", "text": "We can do post-mortems later. Frank, walk us through the exposure."},
+        {"speaker": "security_frank", "text": "The commit has been in the branch for approximately 2 hours and 45 minutes. CloudTrail shows no unauthorized API calls yet in that window, which is good. But we need to rotate immediately. Alice, do you have IAM console access right now?"},
+        {"speaker": "dev_alice", "text": "Yes, I'm logging in now."},
+        {"speaker": "security_frank", "text": "Create new keys first, update the CI/CD pipeline secrets with the new keys, then deactivate the old ones. Don't delete yet in case we need forensics. The order matters — if you deactivate before updating CI/CD, we'll break builds."},
+        {"speaker": "dev_alice", "text": "Understood. I'll update the GitHub Actions secrets before deactivating."},
+        {"speaker": "cto_helen", "text": "How long for the full remediation including git history cleanup?"},
+        {"speaker": "security_frank", "text": "Key rotation: 30 minutes tonight. Git history cleanup: BFG Repo Cleaner, maybe 2 hours tomorrow when Alice can do it carefully. We'll need a force push after."},
+        {"speaker": "cto_helen", "text": "Alice, I need you to run a .gitignore audit across all repos this week. This cannot be a one-off fix. Frank, can you put together a secrets management policy proposal?"},
+        {"speaker": "security_frank", "text": "I'll have a draft policy to you by end of this week."},
+        {"speaker": "cto_helen", "text": "And I want a mandatory pre-commit hook for all repos that rejects credential patterns. Alice, can you scope that?"},
+        {"speaker": "dev_alice", "text": "Yes, I can use git-secrets or Detect Secrets. I'll scope it and propose a rollout plan."},
+        {"speaker": "security_frank", "text": "I'll also need a formal incident report filed in ServiceNow by 9 AM tomorrow for our security audit trail."}
+      ],
+      "extracted_action_items": [
+        "Alice: rotate AWS IAM keys immediately — create new keys first, update GitHub Actions secrets, then deactivate old keys",
+        "Alice: run BFG Repo Cleaner for git history cleanup tomorrow",
+        "Alice: run .gitignore audit across all repositories this week",
+        "Alice: scope and propose pre-commit hook for credential detection (git-secrets / Detect Secrets)",
+        "Alice: file formal security incident report in ServiceNow by 2026-06-18 09:00",
+        "Frank: draft secrets management policy proposal by end of week",
+        "Frank: CloudTrail analysis — no unauthorized calls in 2h45m window (documented)"
+      ]
+    },
+    {
+      "id": "MTG-004",
+      "title": "Architecture Review: Read Replica Strategy — June 18, 2026",
+      "date": "2026-06-18",
+      "time": "14:00 UTC",
+      "attendees": ["dev_alice", "sre_dan", "dba_ivan", "dev_george"],
+      "duration_minutes": 60,
+      "transcript": [
+        {"speaker": "dev_alice", "text": "Thanks everyone. Agenda: we need to finalise the read replica routing strategy so Dan and Ivan can unblock the DB work. Dan, can you start with the current state?"},
+        {"speaker": "sre_dan", "text": "Current state: all database traffic hits the primary. Connection pool at 100 max. We're hitting the ceiling during the 9-10 AM peak window and getting 5-second timeouts. We had PagerDuty alerts 3 times yesterday."},
+        {"speaker": "dba_ivan", "text": "I've provisioned a read replica in the same AZ. It's running but lag is at 45 seconds during peak — above the 5-second target. I need to tune synchronous replication settings. I can have it ready with sub-5s lag by tomorrow EOD."},
+        {"speaker": "dev_alice", "text": "Good. George, which queries are the best candidates for replica routing?"},
+        {"speaker": "dev_george", "text": "The task list endpoint is doing N+1 queries. That's the heavy hitter. Also the analytics aggregation queries and the search index warm-up query on startup. Those three represent about 60% of read traffic."},
+        {"speaker": "dev_alice", "text": "Ivan, are those safe to route to the replica with up to 5-second lag?"},
+        {"speaker": "dba_ivan", "text": "Analytics and search warm-up, yes — they're read-only aggregates, stale by 5 seconds is acceptable. Task list is trickier — if a user creates a task and immediately queries the list, they won't see it for up to 5 seconds on the replica. You'll need a consistency strategy."},
+        {"speaker": "dev_alice", "text": "We can add a sticky primary hint for immediate post-write reads. George, can you implement that in the DataLoader?"},
+        {"speaker": "dev_george", "text": "Yes, I can add a session flag that says 'just wrote, read from primary for next 10 seconds'. It's a known pattern."},
+        {"speaker": "sre_dan", "text": "I'll set up the connection pool to expose both primary and replica endpoints. We'll use two separate pool instances."},
+        {"speaker": "dev_alice", "text": "Good. Final action plan: Ivan delivers production-ready replica by tomorrow 6 PM. George implements the DataLoader routing with sticky primary logic. Dan provisions the dual-pool config. I'll coordinate integration testing on the staging replica Ivan set up."},
+        {"speaker": "dba_ivan", "text": "Also, can you send me the specific query signatures you're routing? I want to add query-level monitoring to catch any unexpected patterns hitting the replica."},
+        {"speaker": "dev_alice", "text": "Will do — I'll send you the EXPLAIN ANALYZE outputs from our top 10 queries by end of today."},
+        {"speaker": "sre_dan", "text": "One more thing — we should set up a lag monitor that auto-fails-back to primary if replica lag exceeds 10 seconds. I'll set that up in Datadog."}
+      ],
+      "extracted_action_items": [
+        "Alice: send DBA Ivan EXPLAIN ANALYZE outputs for top 10 queries by EOD 2026-06-18",
+        "Alice: coordinate integration testing on staging replica (replica-staging.internal:5432)",
+        "George: implement sticky-primary post-write routing in DataLoader (10-second window)",
+        "Ivan: deliver production-ready replica with sub-5s lag by 2026-06-19 18:00",
+        "Dan: provision dual-pool config (primary + replica connection pools)",
+        "Dan: set up Datadog replica lag monitor with auto-failback at 10s threshold"
+      ]
+    },
+    {
+      "id": "MTG-005",
+      "title": "Sprint Planning Pre-Read: Q3 Roadmap Discussion — June 18, 2026",
+      "date": "2026-06-18",
+      "time": "16:00 UTC",
+      "attendees": ["dev_alice", "pm_bob", "manager_sarah", "dev_carol", "dev_eve"],
+      "duration_minutes": 45,
+      "transcript": [
+        {"speaker": "manager_sarah", "text": "This is informal — I want to gather technical input before I write the Q3 board presentation. Alice, you first. What are your top three technical priorities for Q3?"},
+        {"speaker": "dev_alice", "text": "Three things: one, complete the JWT session migration — we're blocked on horizontal scaling until that's done. Two, the database read-replica rollout — this sprint unblocks it but there's follow-on work. Three, a proper secrets management system — the credential incident last night made it clear we're operating on trust, not tooling."},
+        {"speaker": "manager_sarah", "text": "Good, those are exactly the type of investments I want to surface. Bob, from a product perspective?"},
+        {"speaker": "pm_bob", "text": "The GraphQL migration Eve is doing this sprint opens up a lot of product features we've been holding. In Q3 I want to ship the real-time notifications, the analytics dashboard, and the partner integration SDK. But all of those depend on the GraphQL work completing cleanly."},
+        {"speaker": "dev_eve", "text": "The migration will be done by end of this sprint. Q3 can use the v2 schema fully. One thing I'd flag: we need a deprecation timeline for v1 REST endpoints so we can remove them cleanly in Q3. Otherwise we're maintaining two schemas."},
+        {"speaker": "pm_bob", "text": "Good point Eve. Let's decide on a v1 sunset date. I'd say September 30? That gives partners 3 months notice."},
+        {"speaker": "dev_alice", "text": "That works from an engineering perspective. Can we put it in writing?"},
+        {"speaker": "manager_sarah", "text": "Yes. Eve, Alice — please collaborate on a formal deprecation notice document that PM team can send to partners. Target: have it drafted by June 27."},
+        {"speaker": "dev_carol", "text": "I want to raise something: we have a PCI DSS audit in Q3. Biometric auth (JIRA-1018) is the immediate item but the audit scope is broader. I think we need a dedicated sprint for compliance hardening in Q3, maybe Sprint 27."},
+        {"speaker": "manager_sarah", "text": "Agreed. Carol, can you scope the full PCI DSS compliance gap analysis and present it to me by June 25? I want to include it in the board presentation with specific resource estimates."},
+        {"speaker": "dev_carol", "text": "Yes, I can do that."},
+        {"speaker": "pm_bob", "text": "One item I need to raise: the analytics demo for stakeholders is June 26. Julia's dashboard work is blocked on the GraphQL migration. Eve, can we confirm that the analytics-specific endpoints will be unblocked by June 22?"},
+        {"speaker": "dev_eve", "text": "I can guarantee the analytics endpoints by June 22 if I prioritise them first this week. I'll swap my order."},
+        {"speaker": "manager_sarah", "text": "Good. Alice, last item — I want to give you a stretch goal for Q3: propose a multi-region active-active architecture. It doesn't need to be built this quarter but I want a feasibility document by August 15 for the Series B conversations."}
+      ],
+      "extracted_action_items": [
+        "Alice: provide Q3 technical roadmap input to Sarah (top-3: JWT migration, DB read-replica, secrets management) — for board presentation",
+        "Eve: guarantee analytics GraphQL endpoints unblocked by 2026-06-22 (demo dependency)",
+        "Alice + Eve: collaborate on REST API v1 deprecation notice document by 2026-06-27",
+        "Carol: present PCI DSS compliance gap analysis with resource estimates to Sarah by 2026-06-25",
+        "Bob: formalise REST v1 sunset date as 2026-09-30 and prepare partner communication",
+        "Alice: multi-region active-active architecture feasibility document by 2026-08-15 (Series B prep)"
+      ]
+    },
+    {
+      "id": "MTG-006",
+      "title": "Mobile Team Sync — Auth Token Refresh Bug Deep Dive — June 18, 2026",
+      "date": "2026-06-18",
+      "time": "11:00 UTC",
+      "attendees": ["dev_carol", "dev_alice", "mobile_lead_ken", "qa_hannah"],
+      "duration_minutes": 30,
+      "transcript": [
+        {"speaker": "dev_carol", "text": "Thanks for joining. I want to walk through my analysis of JIRA-1002 so we're all aligned before I code the fix. The root cause is in the mobile SDK's interceptor chain."},
+        {"speaker": "mobile_lead_ken", "text": "Go ahead."},
+        {"speaker": "dev_carol", "text": "When a 401 is received on a non-refresh endpoint, the interceptor should pause the request, call the refresh endpoint, and retry. But the current code calls the refresh endpoint and then returns the error to the caller without waiting for the retry. It's a missing await."},
+        {"speaker": "mobile_lead_ken", "text": "Classic async bug. Which SDK version?"},
+        {"speaker": "dev_carol", "text": "2.4.1. The fix is adding an await and retrying the original request. But I also want to add a user-visible error message if the refresh fails — currently users just get silently logged out."},
+        {"speaker": "dev_alice", "text": "Good addition. Make sure the error message doesn't expose token details — keep it user-friendly."},
+        {"speaker": "qa_hannah", "text": "For QA: I need a test build before EOD tomorrow to run the regression suite. Can you have that ready?"},
+        {"speaker": "dev_carol", "text": "Yes, I can have a build on TestFlight and the Android internal track by 2026-06-19 6 PM."},
+        {"speaker": "mobile_lead_ken", "text": "One thing to check: the refresh token expiry. If the refresh token itself has expired, what happens?"},
+        {"speaker": "dev_carol", "text": "Good catch — current behaviour is a crash. I'll add explicit handling for refresh token expiry: show a 'Please log in again' screen, clear local state cleanly."},
+        {"speaker": "dev_alice", "text": "Carol, also check whether JIRA-1018 can start with a stub auth layer while you finish JIRA-1002. The biometric auth work doesn't need the real refresh to work if we mock the auth state."},
+        {"speaker": "dev_carol", "text": "That's a good idea. I can create a stub auth provider that JIRA-1018 can develop against. I'll have that stub ready by tomorrow."},
+        {"speaker": "qa_hannah", "text": "I'll need a test plan document for JIRA-1002 regression — can someone own that?"},
+        {"speaker": "dev_carol", "text": "I'll write the test plan and share it by end of today."}
+      ],
+      "extracted_action_items": [
+        "Carol: fix async await bug in mobile SDK interceptor (JIRA-1002) — missing await on refresh retry",
+        "Carol: add user-visible error message for failed refresh (not silent logout)",
+        "Carol: handle refresh token expiry explicitly — show 'Please log in again' screen",
+        "Carol: provide test build on TestFlight + Android internal track by 2026-06-19 18:00",
+        "Carol: create stub auth provider for JIRA-1018 to develop against by 2026-06-19",
+        "Carol: write JIRA-1002 test plan document and share by EOD 2026-06-18"
+      ]
+    }
+  ]
+}
