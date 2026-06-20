@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Agentic task intelligence assistant for overloaded engineers."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["pydantic>=2.0"]
 
 [build-system]
 requires = ["setuptools>=68"]

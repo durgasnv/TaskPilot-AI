@@ -1,13 +1,17 @@
-"""Shared models used across the agent system."""
+"""File-reading primitives for the ingestion layer.
+
+TaskRecord and RankedTask have been replaced by UnifiedTask (unified_task.py),
+which is the canonical data contract shared across all agents and teammates.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 from enum import Enum
 
 
-class TaskSource(str, Enum):
+class FileSource(str, Enum):
+    """Maps config source names to their string keys. Internal to the ingestion layer."""
     JIRA = "jira"
     SERVICENOW = "servicenow"
     OUTLOOK = "outlook"
@@ -16,26 +20,6 @@ class TaskSource(str, Enum):
 
 @dataclass(slots=True)
 class SourceDocument:
-    source: TaskSource
+    source: FileSource
     content: str
     location: str | None = None
-
-
-@dataclass(slots=True)
-class TaskRecord:
-    task_id: str
-    title: str
-    description: str
-    source: TaskSource
-    created_at: datetime | None = None
-    deadline: datetime | None = None
-    severity: str | None = None
-    dependencies: list[str] = field(default_factory=list)
-    evidence: list[str] = field(default_factory=list)
-
-
-@dataclass(slots=True)
-class RankedTask:
-    task: TaskRecord
-    score: float
-    rationale: str
