@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -18,7 +19,7 @@ from taskpilot_ai.interfaces.protocols import (
     VectorDeduplicatorProtocol,
 )
 from taskpilot_ai.llm.client import MockLLMClient
-from taskpilot_ai.models import FileSource, SourceDocument
+from taskpilot_ai.models import FileSource, SourceDocument, detect_source
 from taskpilot_ai.orchestration.graph import TaskPilotGraph
 from taskpilot_ai.orchestration.state import WorkflowState
 from taskpilot_ai.prompts.extraction import build_react_user_prompt
@@ -173,6 +174,149 @@ class PipelineTests(unittest.TestCase):
 
         self.assertEqual(len(calls), 1)
         self.assertIn("p1_emergency.json", calls[0])
+
+
+class AdaptiveInputTests(unittest.TestCase):
+    """Tests that the system handles arbitrary / unexpected file formats."""
+
+    # ── detect_source ────────────────────────────────────────────────────────
+
+    def test_detect_source_identifies_jira(self) -> None:
+        content = json.dumps({"board": {}, "issues": [{"id": "J-1", "title": "Bug"}]})
+        self.assertEqual(detect_source(content), FileSource.JIRA)
+
+    def test_detect_source_identifies_servicenow(self) -> None:
+        content = json.dumps({"records": [{"number": "INC001", "short_description": "Down"}]})
+        self.assertEqual(detect_source(content), FileSource.SERVICENOW)
+
+    def test_detect_source_identifies_servicenow_single_incident(self) -> None:
+        content = json.dumps({"incident": {"number": "INC001", "short_description": "Critical outage"}})
+        self.assertEqual(detect_source(content), FileSource.SERVICENOW)
+
+    def test_detect_source_identifies_outlook(self) -> None:
+        content = json.dumps({"emails": [{"id": "E1", "subject": "Bug report"}]})
+        self.assertEqual(detect_source(content), FileSource.OUTLOOK)
+
+    def test_detect_source_falls_back_to_injected_for_unknown(self) -> None:
+        self.assertEqual(detect_source("not json at all"), FileSource.INJECTED)
+        self.assertEqual(detect_source(json.dumps({"random": "data"})), FileSource.INJECTED)
+
+    # ── MockLLMClient content extraction ─────────────────────────────────────
+
+    def test_mock_llm_extracts_from_incident_wrapper(self) -> None:
+        """The P1 emergency file format: {"incident": {...}} should be parsed."""
+        llm = MockLLMClient()
+        content = json.dumps({
+            "incident": {
+                "number": "INC9999",
+                "short_description": "Payment gateway DOWN",
+                "severity": "P1",
+                "sla_due": "2026-06-20T09:00:00Z",
+                "business_impact": "$10k/min revenue loss",
+            }
+        })
+        response = llm.complete("system", f"Source: injected\nSource content:\n{content}")
+        tasks = json.loads(response.content)
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0]["task_id"], "INC9999")
+        self.assertIn("Payment gateway DOWN", tasks[0]["title"])
+        self.assertEqual(tasks[0]["severity"], "P1")
+
+    def test_mock_llm_extracts_from_flat_json_list(self) -> None:
+        """A bare JSON array of task-like objects should each become a task."""
+        llm = MockLLMClient()
+        content = json.dumps([
+            {"id": "T1", "title": "Fix login bug", "priority": "high"},
+            {"id": "T2", "title": "Update docs", "priority": "low"},
+        ])
+        response = llm.complete("system", f"Source: injected\nSource content:\n{content}")
+        tasks = json.loads(response.content)
+        self.assertEqual(len(tasks), 2)
+        self.assertEqual(tasks[0]["task_id"], "T1")
+        self.assertEqual(tasks[0]["severity"], "P2")  # "high" → P2
+        self.assertEqual(tasks[1]["severity"], "P4")  # "low" → P4
+
+    def test_mock_llm_extracts_from_plain_text(self) -> None:
+        """A plain text file (email body, .txt) becomes a single task."""
+        llm = MockLLMClient()
+        response = llm.complete(
+            "system",
+            "Source: injected\nSource content:\nFix the authentication bug before the release"
+        )
+        tasks = json.loads(response.content)
+        self.assertEqual(len(tasks), 1)
+        self.assertIn("Fix the authentication bug", tasks[0]["title"])
+        self.assertEqual(tasks[0]["extracted"], True)
+
+    def test_mock_llm_extracts_from_arbitrary_json_object(self) -> None:
+        """A single JSON object with no known wrapper is treated as one task."""
+        llm = MockLLMClient()
+        content = json.dumps({
+            "name": "Deploy hotfix",
+            "urgency": "critical",
+            "details": "Patch the memory leak in the worker process",
+        })
+        response = llm.complete("system", f"Source: injected\nSource content:\n{content}")
+        tasks = json.loads(response.content)
+        self.assertEqual(len(tasks), 1)
+        self.assertIn("Deploy hotfix", tasks[0]["title"])
+        self.assertEqual(tasks[0]["severity"], "P1")  # "critical" → P1
+
+    # ── End-to-end: dropped file processed by full pipeline ──────────────────
+
+    def test_event_monitor_injects_file_content_into_pipeline(self) -> None:
+        """A file dropped into watch_dir should appear in raw_inputs and produce extracted tasks."""
+        import tempfile
+        captured: list[WorkflowState] = []
+
+        def fake_runner(state: WorkflowState) -> WorkflowState:
+            # Run extraction only so we can inspect what was injected
+            state = ExtractionAgent().run(state)
+            captured.append(state)
+            return state
+
+        incident = {
+            "incident": {
+                "number": "INC-DEMO",
+                "short_description": "CRITICAL: Database unreachable",
+                "severity": "P1",
+                "business_impact": "All users affected",
+            }
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            monitor = FileDropMonitor(watch_dir=Path(tmpdir), poll_interval=0, graph_runner=fake_runner)
+            monitor.seed()
+            (Path(tmpdir) / "demo_incident.json").write_text(json.dumps(incident))
+            monitor.start(max_iterations=1)
+
+        self.assertEqual(len(captured), 1)
+        state = captured[0]
+        self.assertTrue(state.emergency_mode)
+        self.assertIn(FileSource.INJECTED.value, state.raw_inputs)
+        self.assertGreater(len(state.extracted_tasks), 0)
+        titles = [t.title for t in state.extracted_tasks]
+        self.assertTrue(any("Database unreachable" in t for t in titles))
+
+    def test_full_pipeline_with_injected_p1_emergency_file(self) -> None:
+        """The actual data/injected/p1_emergency.json file should be extracted as a P1 task."""
+        p1_file = Path("data/injected/p1_emergency.json")
+        if not p1_file.exists():
+            self.skipTest("data/injected/p1_emergency.json not present")
+
+        content = p1_file.read_text(encoding="utf-8")
+        state = WorkflowState(emergency_mode=True)
+        state.raw_inputs[FileSource.INJECTED.value] = SourceDocument(
+            source=FileSource.INJECTED,
+            content=content,
+            location=str(p1_file),
+        )
+        state = TaskPilotGraph().run(state)
+
+        self.assertGreater(len(state.extracted_tasks), 0)
+        severities = [t.severity for t in state.extracted_tasks]
+        self.assertIn("P1", severities)
+        # Emergency mode must put the P1 at the top of the daily plan
+        self.assertEqual(state.ranked_tasks[0].severity, "P1")
 
 
 if __name__ == "__main__":

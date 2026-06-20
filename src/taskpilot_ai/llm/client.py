@@ -24,9 +24,10 @@ class LLMClient(ABC):
 
 class MockLLMClient(LLMClient):
     """
-    Returns deterministic fake extraction results keyed on the source name
-    found in the user prompt. Field names match UnifiedTask exactly so
-    _parse_unified_tasks can deserialise without transformation.
+    Returns deterministic fake extraction results for known sources.
+    For unknown or injected sources, parses the actual file content and
+    builds UnifiedTask-compatible JSON from whatever structure it finds.
+    This makes the system work with arbitrary files during demos.
     """
 
     _RESPONSES: dict[str, str] = {
@@ -100,23 +101,129 @@ class MockLLMClient(LLMClient):
         ]),
     }
 
-    _DEFAULT: str = json.dumps([
-        {
-            "task_id": "MOCK-001",
-            "source_id": "MOCK-001",
-            "title": "Extracted task placeholder",
-            "description": "Mock extraction result for an unrecognised source.",
-            "severity": "P3",
+    # Severity normalisation — maps common priority strings to P1-P4
+    _SEVERITY_MAP: dict[str, str] = {
+        "1": "P1", "1 - critical": "P1", "critical": "P1", "urgent": "P1", "p1": "P1",
+        "2": "P2", "2 - high": "P2", "high": "P2", "important": "P2", "p2": "P2",
+        "3": "P3", "3 - moderate": "P3", "medium": "P3", "moderate": "P3", "p3": "P3",
+        "4": "P4", "4 - low": "P4", "low": "P4", "minimal": "P4", "p4": "P4",
+    }
+
+    def complete(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+        # Known sources: return deterministic hardcoded response
+        for source_key, response_json in self._RESPONSES.items():
+            if f"Source: {source_key}" in user_prompt:
+                return LLMResponse(content=response_json, model="mock", tokens_used=0)
+        # Unknown / injected source: extract from the actual file content
+        extracted = self._extract_from_prompt(user_prompt)
+        return LLMResponse(content=extracted, model="mock", tokens_used=0)
+
+    def _extract_from_prompt(self, user_prompt: str) -> str:
+        """Pull the source content block from the prompt and parse it."""
+        marker = "Source content:\n"
+        idx = user_prompt.find(marker)
+        raw = user_prompt[idx + len(marker):].strip() if idx != -1 else user_prompt
+
+        # Strip truncation notice if present
+        trunc = raw.find("\n[...truncated")
+        if trunc != -1:
+            raw = raw[:trunc]
+
+        try:
+            data = json.loads(raw)
+            return self._extract_from_json(data)
+        except (json.JSONDecodeError, TypeError):
+            return self._extract_from_text(raw)
+
+    def _extract_from_json(self, data: object) -> str:
+        """Recursively extract tasks from any JSON structure."""
+        if isinstance(data, list):
+            tasks = [self._dict_to_task(item, f"INJECTED-{i+1:03d}")
+                     for i, item in enumerate(data[:10]) if isinstance(item, dict)]
+            return json.dumps(tasks) if tasks else self._fallback()
+
+        if isinstance(data, dict):
+            # Known list wrappers
+            for key in ("issues", "records", "emails", "meetings", "tasks", "items", "data", "incidents"):
+                if key in data and isinstance(data[key], list):
+                    return self._extract_from_json(data[key])
+            # Single-record wrappers like {"incident": {...}}
+            for key in ("incident", "issue", "ticket", "task", "record", "email", "item"):
+                if key in data and isinstance(data[key], dict):
+                    return json.dumps([self._dict_to_task(data[key], "INJECTED-001")])
+            # Bare dict — treat as a single task
+            return json.dumps([self._dict_to_task(data, "INJECTED-001")])
+
+        return self._fallback()
+
+    def _dict_to_task(self, item: dict, fallback_id: str) -> dict:
+        """Map arbitrary dict keys to UnifiedTask fields."""
+        task_id = str(
+            item.get("task_id") or item.get("id") or item.get("number")
+            or item.get("key") or item.get("ticket_id") or fallback_id
+        )
+        title = str(
+            item.get("title") or item.get("summary") or item.get("short_description")
+            or item.get("subject") or item.get("name") or item.get("headline")
+            or "Task extracted from injected file"
+        )[:200]
+        description = str(
+            item.get("description") or item.get("body") or item.get("details")
+            or item.get("text") or item.get("content") or item.get("comments") or ""
+        )[:2000]
+        raw_severity = str(
+            item.get("severity") or item.get("priority") or item.get("urgency")
+            or item.get("impact") or "P3"
+        )
+        severity = self._SEVERITY_MAP.get(raw_severity.lower(), "P3")
+        deadline = (
+            item.get("deadline") or item.get("sla_due") or item.get("due_date")
+            or item.get("due") or item.get("target_date")
+        )
+        business_impact = str(
+            item.get("business_impact") or item.get("impact") or item.get("customer_impact") or ""
+        )
+        return {
+            "task_id": task_id,
+            "source_id": task_id,
+            "title": title,
+            "description": description,
+            "severity": severity,
+            "deadline": deadline,
+            "blocked_by": item.get("blocked_by", []),
+            "blocks": item.get("blocks", []),
+            "business_impact": business_impact,
+            "extracted": True,
+        }
+
+    def _extract_from_text(self, text: str) -> str:
+        """Turn plain text (email body, transcript, .txt file) into a single task."""
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        title = lines[0][:200] if lines else "Task from injected file"
+        description = " ".join(lines[1:])[:2000] if len(lines) > 1 else ""
+        return json.dumps([{
+            "task_id": "INJECTED-TXT-001",
+            "source_id": "INJECTED-TXT-001",
+            "title": title,
+            "description": description,
+            "severity": "P2",
+            "deadline": None,
+            "blocked_by": [],
+            "blocks": [],
+            "business_impact": "Injected at runtime — verify urgency.",
+            "extracted": True,
+        }])
+
+    def _fallback(self) -> str:
+        return json.dumps([{
+            "task_id": "INJECTED-001",
+            "source_id": "INJECTED-001",
+            "title": "Task from injected file",
+            "description": "Content could not be parsed into a known structure.",
+            "severity": "P2",
             "deadline": None,
             "blocked_by": [],
             "blocks": [],
             "business_impact": "",
             "extracted": True,
-        }
-    ])
-
-    def complete(self, system_prompt: str, user_prompt: str) -> LLMResponse:
-        for source_key, response_json in self._RESPONSES.items():
-            if f"Source: {source_key}" in user_prompt:
-                return LLMResponse(content=response_json, model="mock", tokens_used=0)
-        return LLMResponse(content=self._DEFAULT, model="mock", tokens_used=0)
+        }])
