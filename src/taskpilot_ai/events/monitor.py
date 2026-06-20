@@ -91,7 +91,29 @@ class FileDropMonitor:
             # Unreadable file still triggers the re-run; content just won't be extracted.
             pass
 
-        return self.graph_runner(state)
+        new_state = self.graph_runner(state)
+
+        # Dev4: send a follow-up alert with the new #1 task after re-rank.
+        if new_state and new_state.ranked_tasks:
+            top = new_state.ranked_tasks[0]
+            from datetime import datetime, timezone
+
+            if top.deadline:
+                dl_tz = top.deadline if top.deadline.tzinfo else top.deadline.replace(tzinfo=timezone.utc)
+                remaining = dl_tz - datetime.now(timezone.utc)
+                hrs = int(remaining.total_seconds() // 3600)
+                deadline_str = f"{top.deadline.strftime('%b %d %H:%M UTC')} ({hrs}h remaining)"
+            else:
+                deadline_str = "no deadline set"
+
+            self.notifier.notify(
+                f"NEW P1 DETECTED: {top.title}\n"
+                f"  Business impact: {top.business_impact or 'N/A'}\n"
+                f"  SLA deadline: {deadline_str}\n"
+                f"  Re-prioritizing complete — new #1 task above."
+            )
+
+        return new_state
 
     def start(
         self,
