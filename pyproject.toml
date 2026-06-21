@@ -4,7 +4,19 @@ version = "0.1.0"
 description = "Agentic task intelligence assistant for overloaded engineers."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["pydantic>=2.0", "numpy>=1.26", "anthropic>=0.40", "groq>=0.9"]
+dependencies = [
+  "pydantic>=2.0",
+  "numpy>=1.26",
+  "anthropic>=0.40",
+  "groq>=0.9",
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+  "python-multipart>=0.0.9",
+]
+
+[project.scripts]
+taskpilot = "taskpilot_ai.main:main"
+taskpilot-mcp = "taskpilot_ai.mcp.server:main"
 
 [build-system]
 requires = ["setuptools>=68"]
