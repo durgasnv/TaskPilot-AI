@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TaskPilot AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:      #0b0d11;
+  --p1:      #12151d;
+  --p2:      #161b26;
+  --border:  #1c2230;
+  --border2: #242d3f;
+  --text:    #e9ecf1;
+  --muted:   #9197a3;
+  --dim:     #424a5c;
+  --green:   #9ae66e;
+  --green-bg:rgba(154,230,110,.08);
+  --green-bd:rgba(154,230,110,.22);
+  --mono:'JetBrains Mono',monospace;
+  --head:'Space Grotesk',-apple-system,sans-serif;
+}
+
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:var(--head);line-height:1.6;overflow-x:hidden}
+
+a{color:inherit;text-decoration:none}
+button{font-family:var(--head);cursor:pointer}
+
+/* ─── scroll reveal ──────────────────────────────── */
+.reveal{
+  opacity:0;transform:translateY(22px);
+  transition:opacity .65s cubic-bezier(.25,.46,.45,.94),
+             transform .65s cubic-bezier(.25,.46,.45,.94);
+}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-d1{transition-delay:.1s}
+.reveal-d2{transition-delay:.2s}
+.reveal-d3{transition-delay:.3s}
+.reveal-d4{transition-delay:.4s}
+.reveal-d5{transition-delay:.5s}
+.reveal-d6{transition-delay:.6s}
+
+/* ─── nav ────────────────────────────────────────── */
+nav{
+  position:sticky;top:0;z-index:100;
+  height:54px;
+  background:rgba(11,13,17,.88);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 2rem;gap:2rem;
+}
+.nav-logo{
+  font-family:var(--mono);font-size:.82rem;font-weight:700;
+  letter-spacing:.06em;color:var(--green);white-space:nowrap;
+}
+.nav-links{display:flex;gap:1.5rem;flex:1}
+.nav-links a{font-size:.82rem;color:var(--muted);transition:color .18s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{
+  font-size:.78rem;font-weight:600;letter-spacing:.04em;
+  padding:.38rem 1rem;
+  background:var(--green);color:#0b0d11;
+  border:none;border-radius:5px;
+  transition:opacity .18s;white-space:nowrap;
+}
+.nav-cta:hover{opacity:.85}
+
+/* ─── hero ───────────────────────────────────────── */
+#hero{
+  min-height:calc(100vh - 54px);
+  display:grid;grid-template-columns:1fr 1fr;
+  align-items:center;gap:3rem;
+  padding:5rem 2rem 4rem;
+  max-width:1180px;margin:0 auto;
+}
+.hero-pill{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;
+  color:var(--green);border:1px solid var(--green-bd);
+  background:var(--green-bg);border-radius:100px;
+  padding:.28rem .75rem;margin-bottom:1.25rem;
+}
+.hero-pill-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+
+.hero-h1{
+  font-size:clamp(2.2rem,4vw,3.1rem);
+  font-weight:700;letter-spacing:-.03em;
+  line-height:1.15;margin-bottom:1.25rem;
+}
+.hero-h1 .green{color:var(--green)}
+
+.hero-sub{
+  font-size:1rem;color:var(--muted);line-height:1.7;
+  max-width:480px;margin-bottom:2rem;
+}
+
+.hero-actions{display:flex;gap:.75rem;flex-wrap:wrap}
+.btn-primary{
+  font-size:.88rem;font-weight:600;
+  padding:.58rem 1.4rem;
+  background:var(--green);color:#0b0d11;
+  border:none;border-radius:5px;transition:opacity .18s;
+}
+.btn-primary:hover{opacity:.85}
+.btn-ghost{
+  font-size:.88rem;font-weight:500;
+  padding:.55rem 1.4rem;
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border2);border-radius:5px;
+  transition:color .18s,border-color .18s;
+}
+.btn-ghost:hover{color:var(--text);border-color:var(--dim)}
+
+/* ─── hero card ──────────────────────────────────── */
+.hero-card{
+  background:var(--p1);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;position:relative;
+  font-family:var(--mono);font-size:.78rem;
+}
+.hc-bar{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.6rem 1rem;
+  background:var(--p2);border-bottom:1px solid var(--border);
+}
+.hc-dot{width:8px;height:8px;border-radius:50%;background:var(--green);
+  animation:pulse 1.8s ease-in-out infinite}
+.hc-title{color:var(--muted);font-size:.68rem;letter-spacing:.08em}
+.hc-badge{margin-left:auto;font-size:.62rem;color:var(--green);
+  border:1px solid var(--green-bd);border-radius:3px;padding:.05rem .4rem}
+
+.scan-line{
+  position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);
+  animation:scanDown 4s linear infinite;pointer-events:none;
+}
+@keyframes scanDown{
+  0%{top:44px;opacity:0}5%{opacity:.7}90%{opacity:.3}100%{top:100%;opacity:0}
+}
+
+.hc-rows{padding:.75rem 1rem}
+.hc-row{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.42rem 0;border-bottom:1px solid var(--border);
+}
+.hc-row:last-child{border-bottom:none}
+.hc-status{width:14px;text-align:center;flex-shrink:0}
+.hc-status.done{color:var(--green)}
+.hc-status.work{color:var(--green);animation:pulse 1.2s ease-in-out infinite}
+.hc-status.wait{color:var(--dim)}
+.hc-label{flex:1;color:var(--muted)}
+.hc-label.done{color:var(--text);text-decoration:line-through;opacity:.5}
+.hc-label.work{color:var(--text)}
+.hc-tag{
+  font-size:.62rem;padding:.08rem .38rem;border-radius:3px;
+  border:1px solid var(--border);color:var(--muted);flex-shrink:0;
+}
+.hc-tag.green{border-color:var(--green-bd);color:var(--green)}
+.hc-cursor{
+  padding:.5rem 1rem;
+  border-top:1px solid var(--border);
+  color:var(--muted);font-size:.72rem;
+  display:flex;align-items:center;gap:.35rem;
+}
+.cursor-block{
+  display:inline-block;width:7px;height:13px;
+  background:var(--green);
+  animation:blink 1s step-end infinite;vertical-align:middle;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ─── integrations ───────────────────────────────── */
+#integrations{
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:1.5rem 2rem;
+  display:flex;align-items:center;justify-content:center;gap:1rem;
+  flex-wrap:wrap;
+}
+.int-label{font-family:var(--mono);font-size:.65rem;color:var(--dim);letter-spacing:.1em;margin-right:.5rem}
+.int-chip{
+  font-family:var(--mono);font-size:.7rem;
+  color:var(--muted);border:1px solid var(--border);
+  border-radius:4px;padding:.2rem .65rem;
+  transition:color .18s,border-color .18s;
+}
+.int-chip:hover{color:var(--text);border-color:var(--dim)}
+
+/* ─── section commons ────────────────────────────── */
+.section{padding:5rem 2rem;max-width:1180px;margin:0 auto}
+.section-label{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:.14em;
+  color:var(--green);margin-bottom:.75rem;display:block;
+}
+.section-h2{
+  font-size:clamp(1.6rem,2.8vw,2.2rem);font-weight:700;
+  letter-spacing:-.03em;margin-bottom:1rem;
+}
+.section-sub{font-size:.95rem;color:var(--muted);max-width:560px;line-height:1.7}
+
+/* ─── how it works ───────────────────────────────── */
+.hiw-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;
+  margin-top:3rem;
+}
+.hiw-card{
+  background:var(--p1);border:1px solid var(--border);
+  border-radius:8px;padding:1.5rem;
+  transition:border-color .2s;
+}
+.hiw-card:hover{border-color:var(--dim)}
+.hiw-num{
+  font-family:var(--mono);font-size:.68rem;color:var(--green);
+  letter-spacing:.1em;margin-bottom:.75rem;display:block;
+}
+.hiw-title{font-size:1rem;font-weight:600;letter-spacing:-.02em;margin-bottom:.5rem}
+.hiw-desc{font-size:.82rem;color:var(--muted);line-height:1.65}
+
+/* ─── LIVE DEMO ──────────────────────────────────── */
+#demo{padding:4rem 2rem;max-width:1180px;margin:0 auto}
+.demo-header{display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.demo-title{font-size:1.4rem;font-weight:700;letter-spacing:-.03em}
+.run-btn{
+  display:flex;align-items:center;gap:.5rem;
+  font-size:.82rem;font-weight:600;letter-spacing:.04em;
+  padding:.5rem 1.25rem;
+  background:var(--green);color:#0b0d11;
+  border:none;border-radius:5px;
+  transition:opacity .18s;
+}
+.run-btn:disabled{opacity:.45;cursor:not-allowed}
+.run-btn:not(:disabled):hover{opacity:.85}
+.run-spinner{
+  width:12px;height:12px;border:2px solid rgba(11,13,17,.3);
+  border-top-color:#0b0d11;border-radius:50%;
+  animation:spin .7s linear infinite;display:none;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.demo-meta{
+  display:flex;align-items:center;gap:1.5rem;
+  font-family:var(--mono);font-size:.72rem;color:var(--muted);
+  margin-left:auto;
+}
+.meta-val{color:var(--green);font-weight:700}
+
+/* progress */
+.progress-wrap{
+  height:2px;background:var(--border);
+  border-radius:2px;margin-bottom:1.5rem;overflow:hidden;
+}
+.progress-bar{
+  height:100%;background:var(--green);width:0%;
+  transition:width .6s cubic-bezier(.4,0,.2,1);
+}
+
+/* pipeline stages */
+.stages{
+  display:flex;gap:.35rem;margin-bottom:1.75rem;flex-wrap:wrap;
+}
+.stage{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:.06em;
+  padding:.22rem .65rem;border-radius:3px;
+  background:var(--p1);border:1px solid var(--border);
+  color:var(--dim);transition:all .3s;
+}
+.stage.active{border-color:var(--green-bd);color:var(--green);background:var(--green-bg)}
+.stage.done{color:var(--muted);border-color:var(--border)}
+
+/* upload tabs */
+.upload-row{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.upload-mode-tabs{display:flex;gap:.35rem}
+.utab{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;
+  padding:.25rem .65rem;
+  background:var(--p1);border:1px solid var(--border);
+  color:var(--muted);border-radius:4px;transition:all .15s;
+}
+.utab.active{background:var(--green);color:#0b0d11;border-color:var(--green)}
+.upload-desc-text{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.upload-file-btn{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;
+  padding:.25rem .7rem;
+  background:var(--p2);border:1px dashed var(--border2);
+  color:var(--muted);border-radius:4px;cursor:pointer;
+  transition:all .15s;margin-left:auto;
+}
+.upload-file-btn:hover{border-color:var(--green-bd);color:var(--green)}
+#file-input{display:none}
+
+/* console */
+.console{
+  display:grid;grid-template-columns:360px 1fr;
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;
+  min-height:320px;
+}
+.pane{display:flex;flex-direction:column;overflow:hidden}
+.pane-log{border-right:1px solid var(--border)}
+.pane-hd{
+  display:flex;align-items:center;gap:.6rem;
+  height:34px;padding:0 1rem;
+  background:var(--p2);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;color:var(--muted);
+  flex-shrink:0;
+}
+.pane-badge{
+  margin-left:auto;font-size:.6rem;color:var(--green);
+  background:var(--green-bg);border:1px solid var(--green-bd);
+  border-radius:3px;padding:.03rem .4rem;opacity:0;transition:opacity .3s;
+}
+.pane-badge.show{opacity:1}
+.pane-body{
+  flex:1;overflow-y:auto;padding:.75rem 1rem;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+
+/* log entries */
+.log-entry{
+  display:grid;grid-template-columns:52px 22px 1fr;
+  gap:0 .35rem;
+  font-family:var(--mono);font-size:.7rem;line-height:1.65;
+  opacity:0;transform:translateX(-4px);
+  animation:logIn .25s ease forwards;
+  padding:.05rem 0;
+}
+@keyframes logIn{to{opacity:1;transform:translateX(0)}}
+.le-t{color:var(--dim)}
+.le-i{text-align:center}
+.le-i.ok{color:var(--green)}
+.le-i.run{color:var(--green);animation:pulse 1.4s ease-in-out infinite}
+.le-i.warn{color:#e8a040}
+.le-i.dim{color:var(--dim)}
+.le-msg{color:var(--muted)}
+.le-msg .hi{color:var(--text)}
+.le-msg .ok{color:var(--green)}
+.le-msg .num{color:var(--text);font-weight:500}
+.le-msg .warn{color:#e8a040}
+
+.log-hr{height:1px;background:var(--border);margin:.4rem 0;
+  opacity:0;animation:logIn .25s ease forwards}
+
+/* task cards */
+.agent-summary{
+  margin-bottom:1rem;padding-bottom:.75rem;
+  border-bottom:1px solid var(--border);
+  opacity:0;animation:fadeUp .4s ease forwards;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.summary-row{display:flex;gap:1.5rem;margin-top:.5rem;flex-wrap:wrap}
+.stat-box{display:flex;flex-direction:column;gap:.1rem}
+.stat-n{font-family:var(--mono);font-size:1.15rem;font-weight:700;color:var(--green)}
+.stat-k{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.q-lbl{
+  font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;
+  color:var(--dim);padding:.35rem 0 .5rem;
+  border-bottom:1px solid var(--border);margin-bottom:.6rem;
+}
+
+.task-card{
+  display:flex;gap:.65rem;
+  padding:.6rem .75rem;margin-bottom:.45rem;
+  background:var(--p2);border:1px solid var(--border);
+  border-left:3px solid var(--dim);border-radius:0 5px 5px 0;
+  opacity:0;transform:translateX(8px);
+  animation:cardIn .3s ease forwards;
+}
+@keyframes cardIn{to{opacity:1;transform:translateX(0)}}
+.task-card.p1{border-left-color:#e04848}
+.task-card.p2{border-left-color:#e08830}
+.task-card.p3{border-left-color:#c49820}
+.task-card.p4{border-left-color:var(--dim)}
+
+.t-rank{
+  font-family:var(--mono);font-size:.65rem;color:var(--dim);
+  flex-shrink:0;min-width:1.5rem;padding-top:.1rem;text-align:right;
+}
+.t-body{flex:1;min-width:0}
+.t-top{display:flex;align-items:baseline;gap:.45rem;flex-wrap:wrap;margin-bottom:.15rem}
+.sev{
+  font-family:var(--mono);font-size:.6rem;font-weight:700;
+  padding:.08rem .35rem;border-radius:3px;flex-shrink:0;
+}
+.sev.p1{background:#e04848;color:#fff}
+.sev.p2{background:#e08830;color:#fff}
+.sev.p3{background:#c49820;color:#0b0d11}
+.sev.p4{background:var(--dim);color:#fff}
+.overdue{
+  font-family:var(--mono);font-size:.58rem;
+  color:#e04848;border:1px solid rgba(224,72,72,.35);
+  border-radius:3px;padding:.04rem .32rem;flex-shrink:0;
+}
+.t-title{font-size:.82rem;font-weight:600;flex:1}
+.t-score{font-family:var(--mono);font-size:.62rem;color:var(--dim);flex-shrink:0}
+.t-meta{font-family:var(--mono);font-size:.63rem;color:var(--dim);margin-bottom:.12rem}
+.t-why{font-size:.67rem;color:var(--dim);font-style:italic;line-height:1.5}
+.t-badges{display:flex;gap:.3rem;margin-top:.2rem;flex-wrap:wrap}
+.badge{
+  font-family:var(--mono);font-size:.58rem;
+  padding:.06rem .35rem;border-radius:3px;
+  border:1px solid var(--border);color:var(--dim);
+}
+.badge.llm{color:var(--green);border-color:var(--green-bd)}
+.badge.blocks{color:#e08830;border-color:rgba(224,136,48,.35)}
+
+.standby{padding:1.5rem 0;font-size:.82rem;color:var(--dim);font-style:italic}
+
+/* chat */
+.chat-wrap{
+  border:1px solid var(--border);border-top:none;
+  border-radius:0 0 8px 8px;overflow:hidden;
+}
+.chat-log{
+  max-height:120px;overflow-y:auto;
+  padding:.5rem 1rem 0;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+.chat-q{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-bottom:.1rem}
+.chat-q::before{content:'▶  ';color:var(--green)}
+.chat-a{
+  font-size:.78rem;color:var(--text);
+  padding:.25rem 0 .5rem 1.1rem;
+  border-left:2px solid var(--border2);
+  margin-bottom:.5rem;line-height:1.55;
+}
+.chat-bar{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.52rem 1rem;
+  border-top:1px solid var(--border);background:var(--p1);
+}
+.chat-prompt{font-family:var(--mono);color:var(--green);font-size:.85rem}
+#query-input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:.82rem;font-family:var(--head);
+  caret-color:var(--green);
+}
+#query-input::placeholder{color:var(--dim)}
+#query-input:disabled::placeholder{color:var(--dim)}
+#send-btn{
+  font-family:var(--mono);font-size:.63rem;letter-spacing:.08em;
+  padding:.28rem .75rem;
+  background:var(--p2);border:1px solid var(--border);
+  color:var(--dim);border-radius:4px;transition:all .18s;
+}
+#send-btn.on{background:var(--green);color:#0b0d11;border-color:var(--green);cursor:pointer}
+#send-btn.on:hover{opacity:.85}
+
+/* ─── features ───────────────────────────────────── */
+#features{padding:5rem 2rem;max-width:1180px;margin:0 auto}
+.feat-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;
+  margin-top:3rem;background:var(--border);
+}
+.feat-card{
+  background:var(--p1);padding:1.5rem;
+  transition:background .2s;
+}
+.feat-card:hover{background:var(--p2)}
+.feat-icon{
+  font-family:var(--mono);font-size:.7rem;
+  color:var(--green);margin-bottom:.75rem;letter-spacing:.06em;
+}
+.feat-title{font-size:.95rem;font-weight:600;letter-spacing:-.02em;margin-bottom:.4rem}
+.feat-desc{font-size:.8rem;color:var(--muted);line-height:1.65}
+
+/* ─── CTA ────────────────────────────────────────── */
+#cta{
+  padding:7rem 2rem;text-align:center;position:relative;overflow:hidden;
+}
+.cta-glow{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(154,230,110,.06) 0%,transparent 70%);
+  pointer-events:none;
+}
+.cta-h2{
+  font-size:clamp(1.8rem,3vw,2.6rem);font-weight:700;
+  letter-spacing:-.03em;margin-bottom:1rem;position:relative;
+}
+.cta-sub{font-size:.95rem;color:var(--muted);margin-bottom:2rem;position:relative}
+
+/* ─── footer ─────────────────────────────────────── */
+footer{
+  border-top:1px solid var(--border);
+  padding:1.5rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:.75rem;
+}
+.foot-brand{font-family:var(--mono);font-size:.75rem;color:var(--green)}
+.foot-note{font-family:var(--mono);font-size:.65rem;color:var(--dim)}
+
+/* ─── agent roster row (Feature 1) ──────────────── */
+.roster-row{
+  display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
+  padding:.5rem 1.5rem;margin:0 -1.5rem;
+  background:linear-gradient(90deg,var(--p1),transparent);
+  border-bottom:1px solid var(--border);
+  font-family:var(--mono);
+}
+.roster-label{font-size:.62rem;color:var(--dim);letter-spacing:.08em;margin-right:.25rem}
+.roster-agent{
+  display:flex;align-items:center;gap:.3rem;
+  padding:.22rem .55rem;border-radius:3px;
+  background:var(--p2);border:1px solid var(--border);
+  font-size:.62rem;color:var(--muted);transition:border-color .2s;
+}
+.roster-agent.active{border-color:var(--green);color:var(--green)}
+.roster-agent .dot{width:5px;height:5px;border-radius:50%;background:var(--dim)}
+.roster-agent.active .dot{background:var(--green);box-shadow:0 0 4px var(--green)}
+
+/* ─── output tab bar ─────────────────────────────── */
+.out-tabs{display:flex;gap:.15rem}
+.otab{
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;
+  padding:.18rem .6rem;border-radius:3px 3px 0 0;
+  background:transparent;border:1px solid transparent;
+  color:var(--dim);cursor:pointer;transition:all .15s;
+}
+.otab:hover{color:var(--muted)}
+.otab.active{background:var(--p1);border-color:var(--border);border-bottom-color:var(--p1);color:var(--text)}
+.out-tab-panel{display:none;flex-direction:column;flex:1;min-height:0}
+.out-tab-panel.active-tab{display:flex}
+
+/* ─── calendar timeline (Feature 5) ─────────────── */
+.cal-block{
+  display:flex;gap:.75rem;padding:.6rem 1rem;
+  border-bottom:1px solid var(--border);font-family:var(--mono);
+}
+.cal-block.focus{background:rgba(154,230,110,.04)}
+.cal-time{font-size:.65rem;color:var(--dim);width:5rem;flex-shrink:0;padding-top:.1rem}
+.cal-icon{font-size:.8rem;flex-shrink:0;padding-top:.05rem}
+.cal-info{flex:1;min-width:0}
+.cal-title{font-size:.75rem;color:var(--text);margin-bottom:.2rem}
+.cal-block.focus .cal-title{color:var(--green)}
+.cal-tasks{display:flex;flex-direction:column;gap:.2rem;margin-top:.3rem}
+.cal-task{
+  font-size:.65rem;color:var(--muted);
+  padding:.15rem .4rem;border-left:2px solid var(--dim);
+}
+.cal-task.p1{border-left-color:#e04848}
+.cal-task.p2{border-left-color:#e08830}
+
+/* ─── team dashboard (Feature 3) ────────────────── */
+.team-engineer{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.55rem 1rem;border-bottom:1px solid var(--border);
+  font-family:var(--mono);
+}
+.team-engineer:hover{background:var(--p2)}
+.te-name{font-size:.72rem;color:var(--text);width:7rem;flex-shrink:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.te-bar-wrap{flex:1;background:var(--border);border-radius:2px;height:4px;min-width:60px}
+.te-bar{height:4px;border-radius:2px;background:var(--green);transition:width .5s ease}
+.te-bar.warn{background:#e08830}
+.te-bar.crit{background:#e04848}
+.te-stats{display:flex;gap:.5rem;flex-shrink:0}
+.te-stat{font-size:.62rem;color:var(--muted)}
+.te-stat.p1{color:#e04848}
+.te-stat.blocked{color:#e08830}
+
+/* ─── task feedback buttons (Feature 2) ─────────── */
+.t-feedback{display:flex;gap:.2rem;margin-top:.3rem}
+.fb-btn{
+  font-family:var(--mono);font-size:.58rem;
+  padding:.1rem .35rem;border-radius:2px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--dim);cursor:pointer;transition:all .15s;
+}
+.fb-btn:hover{border-color:var(--muted);color:var(--muted)}
+.fb-btn.active-snooze{background:rgba(74,74,74,.3);color:var(--dim);border-color:var(--dim)}
+.fb-btn.active-boost{background:rgba(154,230,110,.12);color:var(--green);border-color:var(--green)}
+.fb-btn.active-deprioritize{background:rgba(224,136,48,.1);color:#e08830;border-color:#e08830}
+
+/* ─── filter bar ─────────────────────────────────── */
+.filter-bar{
+  display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
+  padding:.5rem 1rem;
+  border-bottom:1px solid var(--border);
+  background:var(--p2);
+  flex-shrink:0;
+}
+.filter-group{display:flex;align-items:center;gap:.3rem}
+.filter-label{
+  font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;
+  color:var(--dim);margin-right:.15rem;
+}
+.fpill{
+  font-family:var(--mono);font-size:.62rem;
+  padding:.18rem .52rem;border-radius:3px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;transition:all .15s;
+}
+.fpill:hover{border-color:var(--dim);color:var(--text)}
+.fpill.active{background:var(--green);color:#0b0d11;border-color:var(--green)}
+.filter-count{
+  font-family:var(--mono);font-size:.62rem;color:var(--muted);
+  margin-left:auto;white-space:nowrap;
+}
+
+/* ─── scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+@media(max-width:800px){
+  #hero{grid-template-columns:1fr}
+  .hero-card{display:none}
+  .hiw-grid,.feat-grid{grid-template-columns:1fr}
+  .console{grid-template-columns:1fr}
+  .pane-log{border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">TaskPilot-AI</div>
+  <div class="nav-links">
+    <a href="#how-it-works">How it works</a>
+    <a href="#demo">Live demo</a>
+    <a href="#features">Features</a>
+  </div>
+  <button class="nav-cta" onclick="scrollToDemo()">Get started</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-pill"><span class="hero-pill-dot"></span>agentic &middot; acts on its own</div>
+    <h1 class="hero-h1">The agent that handles<br>your <span class="green">engineering backlog.</span></h1>
+    <p class="hero-sub">Reads Jira boards, ServiceNow queues, Outlook inboxes and meeting transcripts. Extracts hidden action items, merges duplicates across tools and delivers a ranked daily plan — with a reason for every decision.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="scrollToDemo()">Run the agent &rarr;</button>
+      <button class="btn-ghost" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">How it works</button>
+    </div>
+  </div>
+
+  <!-- live task card -->
+  <div class="hero-card">
+    <div class="hc-bar">
+      <div class="hc-dot"></div>
+      <span class="hc-title">TASKPILOT AGENT &middot; ACTIVE</span>
+      <span class="hc-badge">live</span>
+    </div>
+    <div class="scan-line"></div>
+    <div class="hc-rows">
+      <div class="hc-row">
+        <span class="hc-status done">&#10003;</span>
+        <span class="hc-label done">JIRA-1001: file upload timeout</span>
+        <span class="hc-tag green">resolved</span>
+      </div>
+      <div class="hc-row">
+        <span class="hc-status done">&#10003;</span>
+        <span class="hc-label done">SN-002: payment gateway outage</span>
+        <span class="hc-tag green">resolved</span>
+      </div>
+      <div class="hc-row">
+        <span class="hc-status work">&#9679;</span>
+        <span class="hc-label work">EMAIL-001: VP escalation — ACME</span>
+        <span class="hc-tag">extracting</span>
+      </div>
+      <div class="hc-row">
+        <span class="hc-status wait">&#183;</span>
+        <span class="hc-label">SN-INC0001011: GDPR deletion</span>
+        <span class="hc-tag">queued</span>
+      </div>
+      <div class="hc-row">
+        <span class="hc-status wait">&#183;</span>
+        <span class="hc-label">JIRA-1006: rotate AWS keys</span>
+        <span class="hc-tag">queued</span>
+      </div>
+    </div>
+    <div class="hc-cursor">
+      <span class="cursor-block"></span>
+      drafting response for ACME Corp escalation
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATIONS -->
+<div id="integrations">
+  <span class="int-label">READS FROM</span>
+  <span class="int-chip">Jira</span>
+  <span class="int-chip">ServiceNow</span>
+  <span class="int-chip">Outlook</span>
+  <span class="int-chip">Meeting Notes</span>
+  <span class="int-chip">Groq LLM</span>
+  <span class="int-chip">PII-safe</span>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works" class="section">
+  <span class="section-label">HOW IT WORKS</span>
+  <h2 class="section-h2">Three steps. Zero manual triage.</h2>
+  <p class="section-sub">TaskPilot reads from your tools, reasons about what matters and surfaces a plan. You review. You ship.</p>
+  <div class="hiw-grid">
+    <div class="hiw-card reveal reveal-d1">
+      <span class="hiw-num">01</span>
+      <div class="hiw-title">Connect your stack</div>
+      <p class="hiw-desc">Drop in Jira boards, ServiceNow queues, email inboxes or meeting transcripts. The agent handles any format — structured JSON or raw body text.</p>
+    </div>
+    <div class="hiw-card reveal reveal-d2">
+      <span class="hiw-num">02</span>
+      <div class="hiw-title">Delegate, don't dictate</div>
+      <p class="hiw-desc">The LLM reads every unstructured source and extracts action items the tracker never saw. Duplicates are merged. Everything is ranked by urgency, severity and business impact.</p>
+    </div>
+    <div class="hiw-card reveal reveal-d3">
+      <span class="hiw-num">03</span>
+      <div class="hiw-title">Review what matters</div>
+      <p class="hiw-desc">A ranked daily plan with a plain-English reason for every position. Ask the agent anything. Drop a new file mid-session — P1s resurface in seconds.</p>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE DEMO -->
+<section id="demo">
+  <div style="max-width:1180px;margin:0 auto;padding:0 2rem">
+    <div class="demo-header">
+      <span class="section-label" style="margin:0">LIVE DEMO</span>
+      <h2 class="demo-title">Watch the agent work.</h2>
+      <button id="run-btn" class="run-btn" onclick="runPipeline()">
+        <div id="run-spinner" class="run-spinner"></div>
+        Run TaskPilot
+      </button>
+      <div class="demo-meta">
+        <span>Resolved <span id="resolved-count" class="meta-val">0</span> tasks</span>
+        <span><span id="hours-count" class="meta-val">0</span> hrs reclaimed</span>
+      </div>
+    </div>
+
+    <!-- agent roster (Feature 1) -->
+    <div id="roster-row" class="roster-row" style="display:none"></div>
+
+    <!-- stages -->
+    <div class="stages">
+      <span class="stage" id="st-0">ingestion</span>
+      <span class="stage" id="st-1">extraction</span>
+      <span class="stage" id="st-2">deduplication</span>
+      <span class="stage" id="st-3">prioritization</span>
+      <span class="stage" id="st-4">planning</span>
+    </div>
+
+    <!-- progress bar -->
+    <div class="progress-wrap"><div id="progress-bar" class="progress-bar"></div></div>
+
+    <!-- upload row -->
+    <div class="upload-row">
+      <div class="upload-mode-tabs">
+        <button class="utab active" id="tab-src" onclick="setMode('source')">Source file</button>
+        <button class="utab" id="tab-inj" onclick="setMode('inject')">Emergency inject</button>
+      </div>
+      <span class="upload-desc-text" id="udesc">Auto-detects Jira / ServiceNow / Outlook / Meetings and re-runs on that file.</span>
+      <label class="upload-file-btn" for="file-input">+ Upload file</label>
+      <input type="file" id="file-input" accept=".json,.txt,.csv,.md">
+    </div>
+
+    <!-- console -->
+    <div class="console">
+      <div class="pane pane-log">
+        <div class="pane-hd">
+          AGENT LOG
+          <span id="log-badge" class="pane-badge"></span>
+        </div>
+        <div id="log" class="pane-body"><div class="standby">Waiting to start...</div></div>
+      </div>
+      <div class="pane">
+        <div class="pane-hd">
+          <div class="out-tabs">
+            <button class="otab active" id="otab-tasks"    onclick="switchOutTab('tasks')">TASKS</button>
+            <button class="otab"        id="otab-calendar" onclick="switchOutTab('calendar')">SCHEDULE</button>
+            <button class="otab"        id="otab-team"     onclick="switchOutTab('team')">TEAM</button>
+          </div>
+          <span id="out-badge" class="pane-badge"></span>
+        </div>
+        <!-- Tasks tab -->
+        <div id="tab-tasks" class="out-tab-panel active-tab">
+          <div id="filter-bar" class="filter-bar" style="display:none">
+            <div class="filter-group">
+              <span class="filter-label">SEV</span>
+              <button class="fpill active" data-f="sev" data-v="all">ALL</button>
+              <button class="fpill" data-f="sev" data-v="P1">P1</button>
+              <button class="fpill" data-f="sev" data-v="P2">P2</button>
+              <button class="fpill" data-f="sev" data-v="P3">P3</button>
+              <button class="fpill" data-f="sev" data-v="P4">P4</button>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">SRC</span>
+              <button class="fpill active" data-f="src" data-v="all">ALL</button>
+              <button class="fpill" data-f="src" data-v="JIRA">JIRA</button>
+              <button class="fpill" data-f="src" data-v="SERVICENOW">SN</button>
+              <button class="fpill" data-f="src" data-v="EMAIL">EMAIL</button>
+              <button class="fpill" data-f="src" data-v="TRANSCRIPT">MTG</button>
+            </div>
+            <span id="filter-count" class="filter-count"></span>
+          </div>
+          <div id="output" class="pane-body"><div class="standby">Output will appear here after the agent runs.</div></div>
+        </div>
+        <!-- Calendar tab (Feature 5) -->
+        <div id="tab-calendar" class="out-tab-panel" style="display:none">
+          <div id="cal-body" class="pane-body"><div class="standby">Run the agent to see today's calendar-aware plan.</div></div>
+        </div>
+        <!-- Team tab (Feature 3) -->
+        <div id="tab-team" class="out-tab-panel" style="display:none">
+          <div id="team-body" class="pane-body"><div class="standby">Run the agent to see team workload distribution.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- chat -->
+    <div class="chat-wrap">
+      <div id="chat-log" class="chat-log"></div>
+      <div class="chat-bar">
+        <span class="chat-prompt">&#9658;</span>
+        <input id="query-input" placeholder="Query the agent..." disabled>
+        <button id="send-btn" onclick="sendQ()">ASK</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <span class="section-label">CAPABILITIES</span>
+  <h2 class="section-h2">Built for engineers skeptical of hype.</h2>
+  <p class="section-sub">Every capability has a clear mechanism. No black boxes — except the LLM, and even that runs through an auditable ReAct loop.</p>
+  <div class="feat-grid">
+    <div class="feat-card reveal reveal-d1">
+      <div class="feat-icon">[ extraction ]</div>
+      <div class="feat-title">Reads between the lines</div>
+      <p class="feat-desc">The LLM reads raw email bodies and meeting transcripts. No pre-labelled hints. Action items hidden in a VP's Friday email are surfaced by Monday morning.</p>
+    </div>
+    <div class="feat-card reveal reveal-d2">
+      <div class="feat-icon">[ deduplication ]</div>
+      <div class="feat-title">One ticket, not three</div>
+      <p class="feat-desc">TF-IDF cosine similarity plus title-keyword overlap merges the same bug reported in Jira, ServiceNow and email into a single canonical task.</p>
+    </div>
+    <div class="feat-card reveal reveal-d3">
+      <div class="feat-icon">[ prioritization ]</div>
+      <div class="feat-title">Every rank has a reason</div>
+      <p class="feat-desc">Severity, deadline proximity, dependency impact and business-impact multiplier combine into a 0&ndash;100 score. The rationale is printed next to the rank.</p>
+    </div>
+    <div class="feat-card reveal reveal-d4">
+      <div class="feat-icon">[ emergency mode ]</div>
+      <div class="feat-title">P1s surface in seconds</div>
+      <p class="feat-desc">Drop any file into the injector during a live session. The agent re-ranks with emergency_mode=True and P1s bubble to the top immediately.</p>
+    </div>
+    <div class="feat-card reveal reveal-d5">
+      <div class="feat-icon">[ privacy ]</div>
+      <div class="feat-title">PII scrubbed before the LLM sees it</div>
+      <p class="feat-desc">Eight regex patterns strip emails, phone numbers, Aadhaar, credit cards and AWS keys before any text leaves your environment. One-way, no storage.</p>
+    </div>
+    <div class="feat-card reveal reveal-d6">
+      <div class="feat-icon">[ audit trail ]</div>
+      <div class="feat-title">Every decision logged</div>
+      <p class="feat-desc">Each agent step writes to an execution trace. You can read exactly what the ingestion agent loaded, what the LLM extracted and why a task ranked where it did.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-glow"></div>
+  <h2 class="cta-h2 reveal">Stop triaging.<br><span style="color:var(--green)">Start delivering.</span></h2>
+  <p class="cta-sub reveal reveal-d1">The backlog does not manage itself. Now it does not have to.</p>
+  <button class="btn-primary reveal reveal-d2" onclick="scrollToDemo()">Run the agent &rarr;</button>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="foot-brand">TaskPilot-AI</span>
+  <span class="foot-note">Built with Groq &middot; Llama 3.3 70B &middot; Python 3.11 &middot; No LangChain</span>
+</footer>
+
+<script>
+// ── state ──────────────────────────────────────────
+let agentData = null;
+let uploadMode = 'source';
+const STAGE_NAMES = ['ingestion','extraction','deduplication','prioritization','planning'];
+
+// ── scroll reveal ──────────────────────────────────
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ── utils ──────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function ts(){
+  const n=new Date();
+  return [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+}
+
+function scrollToDemo(){
+  document.getElementById('demo').scrollIntoView({behavior:'smooth'});
+}
+
+// ── upload mode ────────────────────────────────────
+const DESCS = {
+  source:  'Auto-detects Jira / ServiceNow / Outlook / Meetings and re-runs on that file.',
+  inject:  'Adds file as emergency P1 on top of existing pipeline — P1s rise to top instantly.',
+};
+function setMode(m){
+  uploadMode = m;
+  document.getElementById('tab-src').classList.toggle('active', m==='source');
+  document.getElementById('tab-inj').classList.toggle('active', m==='inject');
+  document.getElementById('udesc').textContent = DESCS[m];
+  document.getElementById('file-input').onchange = m==='source'
+    ? e => uploadSource(e.target) : e => injectFile(e.target);
+}
+document.getElementById('file-input').onchange = e => uploadSource(e.target);
+
+// ── log helpers ────────────────────────────────────
+function addLog(icon, cls, html, delay){
+  return new Promise(r => setTimeout(() => {
+    const el = document.getElementById('log');
+    if (el.querySelector('.standby')) el.innerHTML = '';
+    const d = document.createElement('div');
+    d.className = 'log-entry';
+    d.innerHTML = `<span class="le-t">${ts()}</span><span class="le-i ${cls}">${icon}</span><span class="le-msg">${html}</span>`;
+    el.appendChild(d);
+    el.scrollTop = el.scrollHeight;
+    const b = document.getElementById('log-badge');
+    b.textContent = el.querySelectorAll('.log-entry').length;
+    b.classList.add('show');
+    r();
+  }, delay));
+}
+function addHr(delay){
+  return new Promise(r => setTimeout(()=>{
+    const el=document.getElementById('log');
+    const d=document.createElement('div');d.className='log-hr';el.appendChild(d);r();
+  },delay));
+}
+
+const STEP_ICON = {
+  ingestion:     {i:'◈',c:'run'},
+  extraction:    {i:'◎',c:'run'},
+  deduplication: {i:'◇',c:'run'},
+  prioritization:{i:'◆',c:'run'},
+  planning:      {i:'&#10003;',c:'ok'},
+};
+function fmtTrace(step,detail){
+  const s = STEP_ICON[step] || {i:'&middot;',c:'dim'};
+  const t = detail.replace(/(\d[\d,.]*)/g,'<span class="num">$1</span>');
+  return {i:s.i, c:s.c, t};
+}
+
+// ── progress helpers ───────────────────────────────
+function setProgress(pct){ document.getElementById('progress-bar').style.width = pct+'%'; }
+
+function activateStage(idx){
+  STAGE_NAMES.forEach((_,i)=>{
+    const el = document.getElementById('st-'+i);
+    if(i < idx) el.className = 'stage done';
+    else if(i === idx) el.className = 'stage active';
+    else el.className = 'stage';
+  });
+}
+
+function tickCounters(total, durationMs){
+  const hrs = +(total * 0.08).toFixed(1);
+  const step = durationMs / total;
+  let n = 0;
+  const iv = setInterval(()=>{
+    n++;
+    document.getElementById('resolved-count').textContent = n;
+    document.getElementById('hours-count').textContent = +(n * 0.08).toFixed(1);
+    if(n >= total) clearInterval(iv);
+  }, step);
+}
+
+function resetDemo(){
+  setProgress(0);
+  STAGE_NAMES.forEach((_,i)=>{ document.getElementById('st-'+i).className='stage'; });
+  document.getElementById('resolved-count').textContent = '0';
+  document.getElementById('hours-count').textContent = '0';
+  document.getElementById('log').innerHTML = '<div class="standby">Running...</div>';
+  document.getElementById('output').innerHTML = '<div class="standby">Output will appear after the agent runs.</div>';
+  document.getElementById('log-badge').classList.remove('show');
+  document.getElementById('out-badge').classList.remove('show');
+  const fb = document.getElementById('filter-bar');
+  if (fb) fb.style.display = 'none';
+  const rr = document.getElementById('roster-row');
+  if (rr) { rr.style.display='none'; rr.innerHTML=''; }
+  const calEl = document.getElementById('cal-body');
+  if(calEl) calEl.innerHTML='<div class="standby">Run the agent to see today\'s calendar-aware plan.</div>';
+  const teamEl = document.getElementById('team-body');
+  if(teamEl) teamEl.innerHTML='<div class="standby">Run the agent to see team workload distribution.</div>';
+  switchOutTab('tasks');
+}
+
+// ── deadline formatter ─────────────────────────────
+function fmtDL(iso){
+  if(!iso) return null;
+  const d=new Date(iso), now=new Date();
+  const h=(d-now)/3600000;
+  if(h<0) return 'OVERDUE '+Math.round(-h)+'h';
+  if(h<24) return 'TODAY '+h.toFixed(0)+'h left';
+  return 'in '+Math.floor(h/24)+'d';
+}
+
+// ── render output ──────────────────────────────────
+function showOutput(data){
+  const el = document.getElementById('output');
+  el.innerHTML = '';
+  const {stats, tasks} = data;
+  const p1s = tasks.filter(t=>t.severity==='P1').length;
+  const over = tasks.filter(t=>t.deadline && new Date(t.deadline)<new Date()).length;
+
+  const sum = document.createElement('div');
+  sum.className = 'agent-summary';
+  sum.innerHTML = `
+    <div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;color:var(--muted);margin-bottom:.4rem">AGENT FINDINGS</div>
+    <div style="font-size:.8rem;color:var(--muted);line-height:1.6">
+      Processed 4 sources &rarr; <strong style="color:var(--text)">${stats.extracted}</strong> tasks extracted &rarr;
+      <strong style="color:var(--text)">${stats.duplicates}</strong> duplicates merged &rarr;
+      <strong style="color:var(--text)">${stats.total}</strong> unique in queue.
+      ${p1s>0?`<strong style="color:#e04848">${p1s} P1${p1s>1?'s':''} require immediate action.</strong>`:''}
+      ${over>0?`<strong style="color:#e08830">${over} item${over>1?'s are':' is'} overdue.</strong>`:''}
+    </div>
+    <div class="summary-row">
+      <div class="stat-box"><span class="stat-n">${stats.extracted}</span><span class="stat-k">Extracted</span></div>
+      <div class="stat-box"><span class="stat-n">${stats.duplicates}</span><span class="stat-k">Merged</span></div>
+      <div class="stat-box"><span class="stat-n">${stats.total}</span><span class="stat-k">In queue</span></div>
+      <div class="stat-box"><span class="stat-n" style="color:#e04848">${p1s}</span><span class="stat-k">P1 critical</span></div>
+    </div>`;
+  el.appendChild(sum);
+
+  const ql = document.createElement('div');
+  ql.className = 'q-lbl';
+  ql.textContent = 'PRIORITY QUEUE';
+  el.appendChild(ql);
+
+  const ob = document.getElementById('out-badge');
+  ob.textContent = tasks.length;
+  ob.classList.add('show');
+
+  tasks.forEach((task, i) => {
+    setTimeout(()=>{
+      const sev = (task.severity||'P3').toLowerCase();
+      const dl = fmtDL(task.deadline);
+      const over = task.deadline && new Date(task.deadline)<new Date();
+      const src = task.source.replace(/tasksource\./i,'').toUpperCase();
+      const badges = [];
+      if(task.extracted) badges.push('<span class="badge llm">LLM extracted</span>');
+      if(task.blocks?.length) badges.push(`<span class="badge blocks">blocks ${task.blocks.length}</span>`);
+
+      const card = document.createElement('div');
+      card.className = `task-card ${sev}`;
+      card.dataset.sev = task.severity;
+      card.dataset.src = src;
+      card.innerHTML = `
+        <div class="t-rank">${String(i+1).padStart(2,'0')}</div>
+        <div class="t-body">
+          <div class="t-top">
+            <span class="sev ${sev}">${task.severity}</span>
+            ${over?'<span class="overdue">OVERDUE</span>':''}
+            <span class="t-title">${esc(task.title)}</span>
+            <span class="t-score">${task.priority_score}</span>
+          </div>
+          <div class="t-meta">${task.task_id} &middot; ${src}${dl?' &middot; '+dl:''}</div>
+          ${task.business_impact?`<div class="t-why">${esc(task.business_impact.slice(0,120))}</div>`:''}
+          ${task.priority_rationale?`<div class="t-why">${esc(task.priority_rationale.slice(0,160))}</div>`:''}
+          ${badges.length?`<div class="t-badges">${badges.join('')}</div>`:''}
+          <div class="t-feedback" id="fb-${esc(task.task_id)}">
+            <button class="fb-btn ${task.mem_status==='boosted'?'active-boost':''}"
+              onclick="sendFeedback('${esc(task.task_id)}','boost',this)">↑ boost</button>
+            <button class="fb-btn ${task.mem_status==='snoozed'?'active-snooze':''}"
+              onclick="sendFeedback('${esc(task.task_id)}','snooze',this)">⊘ snooze</button>
+            <button class="fb-btn ${task.mem_status==='deprioritized'?'active-deprioritize':''}"
+              onclick="sendFeedback('${esc(task.task_id)}','deprioritize',this)">↓ drop</button>
+          </div>
+        </div>`;
+      el.appendChild(card);
+    }, i*75);
+  });
+
+  setTimeout(()=>{
+    // show filter bar and set initial count
+    const fb = document.getElementById('filter-bar');
+    if (fb) fb.style.display = 'flex';
+    // reset filter state
+    activeSev = 'all'; activeSrc = 'all';
+    document.querySelectorAll('.fpill').forEach(b => {
+      b.classList.toggle('active', b.dataset.v === 'all');
+    });
+    const fc = document.getElementById('filter-count');
+    if (fc) fc.textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''} shown`;
+  }, tasks.length*75+100);
+
+  setTimeout(()=>{
+    document.getElementById('query-input').disabled = false;
+    document.getElementById('send-btn').classList.add('on');
+    document.getElementById('query-input').placeholder = 'Ask the agent anything about the priority queue...';
+  }, tasks.length*75+300);
+}
+
+// ── main pipeline run ──────────────────────────────
+async function runPipeline(){
+  const btn = document.getElementById('run-btn');
+  const sp  = document.getElementById('run-spinner');
+  btn.disabled = true;
+  sp.style.display = 'block';
+  btn.childNodes[btn.childNodes.length-1].textContent = ' Running...';
+  document.getElementById('query-input').disabled = true;
+  document.getElementById('send-btn').classList.remove('on');
+  scrollToDemo();
+  resetDemo();
+
+  setProgress(5);
+  await addLog('&middot;','dim','Agent starting — loading pipeline configuration', 0);
+
+  const res = await fetch('/api/run', {method:'POST'});
+  const data = await res.json();
+  agentData = data;
+
+  document.getElementById('llm-label-demo')?.remove();
+
+  const stageOrder = ['ingestion','extraction','deduplication','prioritization','planning'];
+  let stageIdx = 0, elapsed = 200;
+  const pctStep = 90 / (data.traces.length || 1);
+  let pct = 10;
+
+  for(const trace of data.traces){
+    const si = stageOrder.indexOf(trace.step);
+    if(si !== -1 && si !== stageIdx){ stageIdx = si; activateStage(si); }
+    const {i,c,t} = fmtTrace(trace.step, trace.detail);
+    await addLog(i,c,t,elapsed);
+    pct = Math.min(92, pct + pctStep);
+    setProgress(pct);
+    elapsed = 320;
+  }
+
+  activateStage(4);
+  await addHr(300);
+
+  const total = data.stats.total, dup = data.stats.duplicates;
+  const p1s = data.tasks.filter(t=>t.severity==='P1').length;
+  await addLog('&#10003;','ok',
+    `<span class="ok">Analysis complete</span> &middot; <span class="num">${total}</span> tasks ranked &middot; <span class="num">${dup}</span> duplicates merged`+
+    (p1s>0?` &middot; <span class="warn">${p1s} P1 require action</span>`:''), 300);
+
+  setProgress(100);
+  tickCounters(total, 2000);
+
+  btn.disabled = false;
+  sp.style.display = 'none';
+  btn.childNodes[btn.childNodes.length-1].textContent = ' Re-run';
+
+  setTimeout(()=>{
+    showOutput(data);
+    if(data.agents_roster?.length) renderRoster(data.agents_roster);
+    if(data.calendar_blocks?.length) renderCalendar(data.calendar_blocks);
+    if(data.team_view && Object.keys(data.team_view).length) renderTeam(data.team_view, data.stats.total);
+  }, 500);
+}
+
+// ── upload source ──────────────────────────────────
+async function uploadSource(input){
+  const file = input.files[0]; if(!file) return;
+  document.getElementById('query-input').disabled=true;
+  document.getElementById('send-btn').classList.remove('on');
+  resetDemo();
+  setProgress(5);
+  await addLog('◈','run',`<span class="hi">Upload:</span> ${esc(file.name)} — detecting source type...`, 0);
+
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch('/api/upload',{method:'POST',body:form});
+  const data = await res.json();
+  agentData = data;
+
+  await addLog('&#10003;','ok',`Detected: <span class="hi">${data.source_type||'custom'}</span> — running extraction`, 200);
+
+  let elapsed=250, pct=20;
+  const step = 70/(data.traces.length||1);
+  for(const trace of data.traces){
+    const {i,c,t}=fmtTrace(trace.step,trace.detail);
+    await addLog(i,c,t,elapsed);
+    pct=Math.min(90,pct+step); setProgress(pct);
+    elapsed=300;
+  }
+
+  await addHr(320);
+  await addLog('&#10003;','ok',
+    `<span class="ok">Done</span> &middot; <span class="num">${data.stats.total}</span> tasks extracted from <span class="hi">${esc(file.name)}</span>`,320);
+  setProgress(100);
+  tickCounters(data.stats.total, 1500);
+  setTimeout(()=>{
+    showOutput(data);
+    if(data.agents_roster?.length) renderRoster(data.agents_roster);
+    if(data.calendar_blocks?.length) renderCalendar(data.calendar_blocks);
+    if(data.team_view && Object.keys(data.team_view).length) renderTeam(data.team_view, data.stats.total);
+  }, 400);
+  input.value='';
+}
+
+// ── emergency inject ───────────────────────────────
+async function injectFile(input){
+  const file = input.files[0]; if(!file) return;
+  document.getElementById('query-input').disabled=true;
+  document.getElementById('send-btn').classList.remove('on');
+  resetDemo();
+  setProgress(5);
+  await addLog('&#8853;','warn',`<span class="warn">EMERGENCY MODE</span> &middot; Injecting ${esc(file.name)}`, 0);
+
+  const form=new FormData(); form.append('file',file);
+  const res=await fetch('/api/inject',{method:'POST',body:form});
+  const data=await res.json(); agentData=data;
+
+  let elapsed=200, pct=15, step=70/(data.traces.length||1);
+  for(const trace of data.traces){
+    const {i,c,t}=fmtTrace(trace.step,trace.detail);
+    await addLog(i,c,t,elapsed);
+    pct=Math.min(90,pct+step); setProgress(pct);
+    elapsed=300;
+  }
+  await addHr(320);
+  const p1s=data.tasks.filter(t=>t.severity==='P1').length;
+  await addLog('&#10003;','ok',
+    `<span class="ok">Emergency re-rank complete</span> &middot; <span class="num">${data.stats.total}</span> tasks`+
+    (p1s>0?` &middot; <span class="warn">${p1s} P1 surfaced</span>`:''),320);
+  setProgress(100);
+  tickCounters(data.stats.total,1500);
+  setTimeout(()=>{
+    showOutput(data);
+    if(data.agents_roster?.length) renderRoster(data.agents_roster);
+    if(data.calendar_blocks?.length) renderCalendar(data.calendar_blocks);
+    if(data.team_view && Object.keys(data.team_view).length) renderTeam(data.team_view, data.stats.total);
+  }, 400);
+  input.value='';
+}
+
+// ── roster (Feature 1) ─────────────────────────────
+function renderRoster(agents) {
+  const row = document.getElementById('roster-row');
+  if (!row) return;
+  row.style.display = 'flex';
+  row.innerHTML = '<span class="roster-label">AGENTS</span>';
+  const icons = {
+    'jira-agent':'J','sn-agent':'S','email-agent':'E',
+    'meeting-agent':'M','incident-agent':'!','memory-agent':'♦'
+  };
+  agents.forEach((a,i) => {
+    const el = document.createElement('div');
+    el.className = 'roster-agent';
+    el.id = `ra-${a.name}`;
+    el.title = a.role;
+    el.innerHTML = `<span class="dot"></span><span>${icons[a.name]||a.name[0].toUpperCase()} ${a.name}</span>`;
+    row.appendChild(el);
+    setTimeout(()=>el.classList.add('active'), i*120);
+  });
+}
+
+// ── tab switching ──────────────────────────────────
+function switchOutTab(tab){
+  ['tasks','calendar','team'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active-tab', t===tab);
+    document.getElementById('otab-'+t).classList.toggle('active', t===tab);
+  });
+}
+
+// ── calendar (Feature 5) ───────────────────────────
+function renderCalendar(blocks){
+  const el = document.getElementById('cal-body');
+  if (!el) return;
+  el.innerHTML = '';
+  blocks.forEach(b=>{
+    const isFocus = b.type==='focus';
+    const div = document.createElement('div');
+    div.className = 'cal-block' + (isFocus?' focus':'');
+    const tasksHtml = (b.tasks||[]).map(t=>`
+      <div class="cal-task ${(t.severity||'').toLowerCase()}">
+        <strong>${esc(t.task_id)}</strong> — ${esc(t.title)} <span style="color:var(--dim)">(~${t.est_mins}m)</span>
+      </div>`).join('');
+    div.innerHTML = `
+      <div class="cal-time">${b.start}–${b.end}</div>
+      <div class="cal-icon">${isFocus?'⚡':'◎'}</div>
+      <div class="cal-info">
+        <div class="cal-title">${esc(b.label)}</div>
+        ${tasksHtml?`<div class="cal-tasks">${tasksHtml}</div>`:''}
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+// ── team dashboard (Feature 3) ─────────────────────
+function renderTeam(teamView, totalTasks){
+  const el = document.getElementById('team-body');
+  if (!el) return;
+  el.innerHTML = '';
+  const sorted = Object.entries(teamView)
+    .filter(([,d])=>d.total>0)
+    .sort(([,a],[,b])=>b.total-a.total);
+  const maxTasks = Math.max(1,...sorted.map(([,d])=>d.total));
+  sorted.forEach(([eng,d])=>{
+    const pct = Math.round((d.total/maxTasks)*100);
+    const hasCrit = d.p1>0;
+    const hasWarn = d.blocked>0;
+    const div = document.createElement('div');
+    div.className = 'team-engineer';
+    div.innerHTML = `
+      <div class="te-name" title="${esc(eng)}">${esc(eng)}</div>
+      <div class="te-bar-wrap">
+        <div class="te-bar ${hasCrit?'crit':hasWarn?'warn':''}" style="width:${pct}%"></div>
+      </div>
+      <div class="te-stats">
+        <span class="te-stat">${d.total}t</span>
+        ${d.p1?`<span class="te-stat p1">${d.p1}×P1</span>`:''}
+        ${d.blocked?`<span class="te-stat blocked">${d.blocked} blocked</span>`:''}
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+// ── filter ─────────────────────────────────────────
+let activeSev = 'all', activeSrc = 'all';
+
+function applyFilter() {
+  // find which button was clicked (this is called before state updates, so read DOM)
+  document.querySelectorAll('.fpill[data-f="sev"]').forEach(b => {
+    if (b.classList.contains('active')) activeSev = b.dataset.v;
+  });
+  document.querySelectorAll('.fpill[data-f="src"]').forEach(b => {
+    if (b.classList.contains('active')) activeSrc = b.dataset.v;
+  });
+  _runFilter();
+}
+
+// call this right after a pill is clicked — update active state first
+document.addEventListener('click', e => {
+  const pill = e.target.closest('.fpill');
+  if (!pill) return;
+  const group = pill.dataset.f;
+  document.querySelectorAll(`.fpill[data-f="${group}"]`).forEach(b => b.classList.remove('active'));
+  pill.classList.add('active');
+  if (group === 'sev') activeSev = pill.dataset.v;
+  else activeSrc = pill.dataset.v;
+  _runFilter();
+});
+
+function _runFilter() {
+  const cards = document.querySelectorAll('#output .task-card');
+  let visible = 0;
+  cards.forEach(card => {
+    const sev  = card.dataset.sev  || '';
+    const src  = card.dataset.src  || '';
+    const show = (activeSev === 'all' || sev === activeSev) &&
+                 (activeSrc === 'all' || src === activeSrc);
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  const fc = document.getElementById('filter-count');
+  if (fc) fc.textContent = `${visible} task${visible !== 1 ? 's' : ''} shown`;
+}
+
+// ── feedback (Feature 2: memory) ──────────────────
+async function sendFeedback(taskId, action, btn){
+  try {
+    const res = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({task_id: taskId, action}),
+    });
+    const data = await res.json();
+    if (data.error) return;
+
+    // Update button styles in the card
+    const row = document.getElementById(`fb-${taskId}`);
+    if (row) {
+      row.querySelectorAll('.fb-btn').forEach(b=>{
+        b.classList.remove('active-snooze','active-boost','active-deprioritize');
+      });
+      const cls = action==='boost'?'active-boost':action==='snooze'?'active-snooze':'active-deprioritize';
+      btn.classList.add(cls);
+    }
+    // Log to agent log
+    addLog('♦','ok',
+      `Memory updated — ${taskId} marked as <span class="hi">${action}</span>. `+
+      `(${data.summary?.boosted||0} boosted, ${data.summary?.snoozed||0} snoozed, `+
+      `${data.summary?.deprioritized||0} deprioritized)`, 0);
+  } catch(e) { /* silent fail */ }
+}
+
+// ── chat ───────────────────────────────────────────
+async function sendQ(){
+  const inp=document.getElementById('query-input');
+  const q=inp.value.trim(); if(!q||!agentData) return;
+  inp.value='';
+  const log=document.getElementById('chat-log');
+  const qd=document.createElement('div');
+  qd.className='chat-q'; qd.textContent=q; log.appendChild(qd);
+  log.scrollTop=log.scrollHeight;
+
+  const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
+  const data=await res.json();
+  const ad=document.createElement('div');
+  ad.className='chat-a'; ad.textContent=data.answer; log.appendChild(ad);
+  log.scrollTop=log.scrollHeight;
+}
+document.getElementById('query-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendQ();});
+</script>
+</body>
+</html>
