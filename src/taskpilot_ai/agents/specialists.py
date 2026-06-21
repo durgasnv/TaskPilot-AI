@@ -30,9 +30,23 @@ _SOURCE_MAP: dict[str, TaskSource] = {
 
 
 def _parse_unified_tasks(llm_output: str, source: FileSource) -> list[UnifiedTask]:
-    """Parse LLM JSON response into UnifiedTask objects."""
+    """Parse LLM JSON response into UnifiedTask objects.
+
+    Handles free-form responses: strips markdown fences and extracts the first
+    JSON array found in the text (LLMs often wrap output in ReAct prose or
+    code blocks before the actual array).
+    """
+    content = llm_output.strip()
+    # Strip markdown code fences
+    content = re.sub(r"```(?:json)?\s*", "", content)
+    content = re.sub(r"```", "", content).strip()
+    # Extract the outermost JSON array
+    start = content.find("[")
+    end = content.rfind("]")
+    if start != -1 and end > start:
+        content = content[start : end + 1]
     try:
-        items = json.loads(llm_output)
+        items = json.loads(content)
     except json.JSONDecodeError:
         return []
 
@@ -145,6 +159,40 @@ def _basic_keyword_dedup(tasks: list[UnifiedTask]) -> list[UnifiedTask]:
     return [t for t in tasks if t.task_id not in duplicate_of]
 
 
+def _build_email_source_doc(
+    email_path: str = "data/raw/outlook_inbox.json",
+    max_emails: int = 8,
+) -> "SourceDocument | None":
+    """
+    Read the email inbox and strip pre-labeled hidden_action_items so the LLM
+    must find action items from the raw email body — not from pre-labeled fields.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    path = _Path(email_path)
+    if not path.exists():
+        return None
+
+    data = _json.loads(path.read_text(encoding="utf-8"))
+    _SKIP = {"hidden_action_items", "related_jira", "related_incident"}
+    stripped_emails = [
+        {k: v for k, v in email.items() if k not in _SKIP}
+        for email in data.get("emails", [])[:max_emails]
+    ]
+    content = _json.dumps(
+        {"mailbox": data.get("mailbox"), "emails": stripped_emails},
+        indent=2,
+    )
+
+    from taskpilot_ai.models import SourceDocument, FileSource
+    return SourceDocument(
+        source=FileSource.OUTLOOK,
+        content=content,
+        location=email_path,
+    )
+
+
 class AgentMode(str, Enum):
     REACT = "react"
 
@@ -162,12 +210,28 @@ class IngestionAgent(Agent):
             result = self.reader.load_all()
             for err in result.errors:
                 state.trace(self.name, f"Normalizer warning: {err}")
-            state.extracted_tasks.extend(result.tasks)
+
+            # Structured sources (Jira, ServiceNow, meetings) go directly to extracted_tasks.
+            # Email tasks are routed through ExtractionAgent so the LLM reads the body text
+            # and extracts action items — rather than reading pre-labeled hidden_action_items.
+            non_email = [t for t in result.tasks if t.source != TaskSource.EMAIL]
+            email_count = len(result.tasks) - len(non_email)
+            state.extracted_tasks.extend(non_email)
+
+            if email_count > 0:
+                email_doc = _build_email_source_doc()
+                if email_doc is not None:
+                    state.raw_inputs[FileSource.OUTLOOK.value] = email_doc
+                    state.memory.source_locations[FileSource.OUTLOOK.value] = (
+                        email_doc.location or "inline"
+                    )
+
             for src, count in result.source_counts.items():
                 state.memory.source_locations[src] = f"data/raw/{src}"
             state.trace(
                 self.name,
-                f"Normalizer loaded {len(result.tasks)} tasks from {result.source_counts}.",
+                f"Normalizer loaded {len(non_email)} structured tasks; "
+                f"{email_count} email(s) queued for LLM extraction.",
             )
             return state
 

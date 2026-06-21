@@ -6,7 +6,7 @@ from taskpilot_ai.models import SourceDocument
 
 # Hard cap on source content sent to the LLM. Keeps prompt size bounded and
 # prevents large Jira boards from exhausting the context window.
-_MAX_CONTENT_CHARS = 6000
+_MAX_CONTENT_CHARS = 14000
 
 
 def build_ingestion_system_prompt() -> str:

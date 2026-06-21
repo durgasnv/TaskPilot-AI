@@ -233,3 +233,57 @@ class MockLLMClient(LLMClient):
             "business_impact": "",
             "extracted": True,
         }])
+
+
+class GroqLLMClient(LLMClient):
+    """
+    Free LLM client backed by GroqCloud (Llama models).
+    Reads GROQ_API_KEY from the environment. Sign up free at console.groq.com.
+    """
+
+    def __init__(self, model: str = "llama-3.3-70b-versatile", max_tokens: int = 4096) -> None:
+        from groq import Groq
+        self._client = Groq()  # reads GROQ_API_KEY from env
+        self._model = model
+        self._max_tokens = max_tokens
+
+    def complete(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+        response = self._client.chat.completions.create(
+            model=self._model,
+            max_tokens=self._max_tokens,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+        return LLMResponse(
+            content=response.choices[0].message.content,
+            model=self._model,
+            tokens_used=response.usage.total_tokens,
+        )
+
+
+class AnthropicLLMClient(LLMClient):
+    """
+    LLM client backed by the Anthropic Messages API (paid, fallback).
+    Reads ANTHROPIC_API_KEY from the environment.
+    """
+
+    def __init__(self, model: str = "claude-opus-4-8", max_tokens: int = 4096) -> None:
+        import anthropic
+        self._client = anthropic.Anthropic()
+        self._model = model
+        self._max_tokens = max_tokens
+
+    def complete(self, system_prompt: str, user_prompt: str) -> LLMResponse:
+        response = self._client.messages.create(
+            model=self._model,
+            max_tokens=self._max_tokens,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        return LLMResponse(
+            content=response.content[0].text,
+            model=self._model,
+            tokens_used=response.usage.input_tokens + response.usage.output_tokens,
+        )

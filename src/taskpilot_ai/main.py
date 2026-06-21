@@ -1,5 +1,6 @@
 """CLI entry point — runs the full TaskPilot pipeline and prints the daily plan."""
 
+import os
 import sys
 from collections import Counter
 from datetime import datetime, timezone
@@ -25,10 +26,21 @@ def _build_graph() -> TaskPilotGraph:
         reader = FileSystemSourceReader()
 
     from taskpilot_ai.analytics import TFIDFVectorDeduplicator, ScoringPrioritizer
+    from taskpilot_ai.llm.client import AnthropicLLMClient, GroqLLMClient, MockLLMClient
+
+    if os.environ.get("GROQ_API_KEY"):
+        llm = GroqLLMClient()
+        print("LLM: GroqCloud (llama-3.3-70b-versatile) — free tier")
+    elif os.environ.get("ANTHROPIC_API_KEY"):
+        llm = AnthropicLLMClient()
+        print("LLM: Anthropic (claude-opus-4-8) — paid")
+    else:
+        llm = MockLLMClient()
+        print("LLM: Mock (no API key set)")
 
     return TaskPilotGraph(agents=[
         IngestionAgent(reader=reader),
-        ExtractionAgent(),
+        ExtractionAgent(llm=llm),
         DeduplicationAgent(engine=TFIDFVectorDeduplicator(threshold=0.85)),
         PrioritizationAgent(engine=ScoringPrioritizer()),
         PlanningAgent(),
