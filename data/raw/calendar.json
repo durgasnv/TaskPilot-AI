@@ -1,0 +1,63 @@
+{
+  "owner": "alice.kumar@taskpilot.io",
+  "timezone": "UTC",
+  "date": "2026-06-21",
+  "work_start": "09:00",
+  "work_end": "18:00",
+  "events": [
+    {
+      "id": "CAL-001",
+      "title": "Sprint 24 Review & Planning",
+      "start": "09:00",
+      "end": "10:15",
+      "type": "meeting",
+      "attendees": ["alice_kumar", "dev_marco", "dev_priya", "dev_lena", "dev_kenji", "pm_bob"],
+      "location": "Zoom"
+    },
+    {
+      "id": "CAL-002",
+      "title": "Architecture Review — Observability Stack",
+      "start": "11:00",
+      "end": "11:50",
+      "type": "meeting",
+      "attendees": ["alice_kumar", "dev_lena", "dev_marco", "infra_raj"],
+      "location": "Zoom"
+    },
+    {
+      "id": "CAL-003",
+      "title": "Lunch break",
+      "start": "12:30",
+      "end": "13:30",
+      "type": "break",
+      "attendees": [],
+      "location": ""
+    },
+    {
+      "id": "CAL-004",
+      "title": "1:1 with dev_priya",
+      "start": "14:00",
+      "end": "14:30",
+      "type": "meeting",
+      "attendees": ["alice_kumar", "dev_priya"],
+      "location": "Zoom"
+    },
+    {
+      "id": "CAL-005",
+      "title": "Globex Corp — Customer Escalation Call",
+      "start": "15:30",
+      "end": "16:00",
+      "type": "meeting",
+      "attendees": ["alice_kumar", "alex.torres@globexcorp.com", "pm_bob"],
+      "location": "Zoom"
+    },
+    {
+      "id": "CAL-006",
+      "title": "Weekly All-Hands",
+      "start": "16:30",
+      "end": "17:00",
+      "type": "meeting",
+      "attendees": ["all"],
+      "location": "Zoom"
+    }
+  ]
+}
