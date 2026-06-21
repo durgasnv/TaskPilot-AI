@@ -1,0 +1,34 @@
+{
+  "issues": [
+    {
+      "task_id": "DEMO-001",
+      "title": "Critical: Login service returning 503 for all users",
+      "description": "All users unable to log in since 02:00 UTC. Auth service pod crashed after memory limit exceeded. DevOps alerted. 200+ customer support tickets raised.",
+      "severity": "P1",
+      "deadline": "2026-06-21T18:00:00+00:00",
+      "blocked_by": [],
+      "blocks": ["DEMO-002"],
+      "business_impact": "100% login failure rate. Enterprise SLA breach imminent. $500K ARR customers affected."
+    },
+    {
+      "task_id": "DEMO-002",
+      "title": "Deploy hotfix for auth service memory leak",
+      "description": "Root cause identified as unbounded session cache growth. Patch ready in branch fix/auth-memory-leak. Needs review and deploy to prod.",
+      "severity": "P1",
+      "deadline": "2026-06-21T20:00:00+00:00",
+      "blocked_by": ["DEMO-001"],
+      "blocks": [],
+      "business_impact": "Restores login for all users immediately after deploy."
+    },
+    {
+      "task_id": "DEMO-003",
+      "title": "Send outage status update to enterprise customers",
+      "description": "Communications team needs engineering sign-off on status page message before publishing. Draft ready in Notion. Must go out before 16:00 UTC.",
+      "severity": "P2",
+      "deadline": "2026-06-21T16:00:00+00:00",
+      "blocked_by": [],
+      "blocks": [],
+      "business_impact": "Prevents churn during outage window. 3 enterprise accounts watching."
+    }
+  ]
+}
