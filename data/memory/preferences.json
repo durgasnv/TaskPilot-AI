@@ -1,0 +1,19 @@
+{
+  "snoozed_ids": [],
+  "boosted_ids": [],
+  "deprioritized_ids": [],
+  "boosted_labels": [],
+  "deprioritized_labels": [],
+  "interaction_log": [
+    {
+      "task_id": "SN-INC0002001",
+      "action": "snooze",
+      "at": "2026-06-21T16:00:50.246726+00:00"
+    },
+    {
+      "task_id": "SN-INC0002001",
+      "action": "undo",
+      "at": "2026-06-21T16:00:56.826985+00:00"
+    }
+  ]
+}
