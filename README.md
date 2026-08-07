@@ -4,6 +4,7 @@
 
 Autonomously ingests tasks from Jira, ServiceNow, Outlook, and meeting transcripts — deduplicates, scores, and delivers a calendar-aware daily plan through a web console, CLI, and MCP server.
 
+live demo and output pictures -> https://drive.google.com/drive/folders/1DiTxqTaTpu1azzgO-Yi5EQI-zNoYcm5X?usp=drive_link
 ---
 
 ## Team Byte Builders
